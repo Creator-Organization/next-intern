@@ -1,17 +1,12 @@
-import type { Metadata, Viewport } from 'next';
-import './globals.css';
+import type { Metadata } from 'next';
 import { inter, manrope } from '@/lib/fonts';
+import { ThemeProvider } from '@/hooks/use-theme';
+import './globals.css';
 
 export const metadata: Metadata = {
   title: 'NextIntern - Where Careers Begin',
-  description: 'A modern, full-stack internship platform connecting students with companies. Find your perfect internship opportunity today.',
+  description: 'A modern internship platform connecting students with companies. Find your perfect internship opportunity today.',
   keywords: ['internships', 'students', 'companies', 'careers', 'jobs'],
-  authors: [{ name: 'NextIntern Team' }],
-};
-
-export const viewport: Viewport = {
-  width: 'device-width',
-  initialScale: 1,
 };
 
 export default function RootLayout({
@@ -20,11 +15,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${manrope.variable}`}>
-      <body className={inter.className}>
-        <div id="root" className="min-h-screen bg-gray-50">
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${inter.variable} ${manrope.variable} font-sans antialiased`}>
+        <ThemeProvider
+          defaultTheme="teal"
+          storageKey="nextintern-theme"
+        >
           {children}
-        </div>
+        </ThemeProvider>
       </body>
     </html>
   );
