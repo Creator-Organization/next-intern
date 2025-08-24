@@ -1,0 +1,640 @@
+// NextIntern Database Schema
+// 19 Tables Total - Complete Internship Platform
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// CORE TABLES (5)
+// ============================================================================
+
+// Table 1: Users - Authentication & Base User Data
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String?  @map("password_hash")
+  userType     UserType @map("user_type")
+  isVerified   Boolean  @default(false) @map("is_verified")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // OAuth fields
+  googleId String? @unique @map("google_id")
+
+  // Relationships
+  student       Student?
+  company       Company?
+  preferences   UserPreference?
+  sentMessages  Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
+  notifications Notification[]
+  supportTickets SupportTicket[]
+
+  @@map("users")
+  @@index([email])
+  @@index([userType])
+}
+
+// Table 2: Students - Student Profiles & Information
+model Student {
+  id          String   @id @default(cuid())
+  userId      String   @unique @map("user_id")
+  firstName   String   @map("first_name")
+  lastName    String   @map("last_name")
+  phone       String?
+  dateOfBirth DateTime? @map("date_of_birth")
+  
+  // Academic Information
+  college     String?
+  degree      String?
+  fieldOfStudy String? @map("field_of_study")
+  graduationYear Int? @map("graduation_year")
+  cgpa        Float?
+  
+  // Professional Information
+  bio         String?
+  resumeUrl   String? @map("resume_url")
+  portfolioUrl String? @map("portfolio_url")
+  linkedinUrl String? @map("linkedin_url")
+  githubUrl   String? @map("github_url")
+  
+  // Location
+  city        String?
+  state       String?
+  country     String?
+  
+  // Status
+  isAvailable Boolean @default(true) @map("is_available")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relationships
+  user            User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skills          StudentSkill[]
+  applications    Application[]
+  savedInternships SavedInternship[]
+  certificates    Certificate[]
+  interviews      Interview[]
+
+  @@map("students")
+  @@index([userId])
+  @@index([college])
+  @@index([city])
+}
+
+// Table 3: Companies - Company Profiles & Details
+model Company {
+  id          String      @id @default(cuid())
+  userId      String      @unique @map("user_id")
+  companyName String      @map("company_name")
+  industry    String
+  companySize CompanySize @map("company_size")
+  foundedYear Int?        @map("founded_year")
+  
+  // Contact Information
+  email       String?
+  phone       String?
+  websiteUrl  String? @map("website_url")
+  linkedinUrl String? @map("linkedin_url")
+  
+  // Business Information
+  description String?
+  logoUrl     String? @map("logo_url")
+  
+  // Location
+  address     String?
+  city        String
+  state       String
+  country     String
+  
+  // Verification
+  isVerified  Boolean @default(false) @map("is_verified")
+  isActive    Boolean @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relationships
+  user         User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  internships  Internship[]
+  interviews   Interview[]
+
+  @@map("companies")
+  @@index([userId])
+  @@index([industry])
+  @@index([city])
+  @@index([isVerified])
+}
+
+// Table 4: Internships - Job Postings & Requirements
+model Internship {
+  id          String         @id @default(cuid())
+  companyId   String         @map("company_id")
+  title       String
+  description String
+  
+  // Job Details
+  categoryId  String         @map("category_id")
+  locationId  String         @map("location_id")
+  workType    WorkType       @map("work_type")
+  duration    Int            // in weeks
+  stipend     Int?           // monthly stipend
+  currency    String         @default("INR")
+  
+  // Requirements
+  requirements String
+  minQualification String?   @map("min_qualification")
+  preferredSkills String?   @map("preferred_skills")
+  
+  // Application
+  applicationDeadline DateTime? @map("application_deadline")
+  startDate   DateTime?      @map("start_date")
+  isActive    Boolean        @default(true) @map("is_active")
+  
+  // SEO & Search
+  slug        String         @unique
+  
+  // Tracking
+  viewCount   Int            @default(0) @map("view_count")
+  applicationCount Int       @default(0) @map("application_count")
+  
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+
+  // Relationships
+  company      Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  category     Category @relation(fields: [categoryId], references: [id])
+  location     Location @relation(fields: [locationId], references: [id])
+  skills       InternshipSkill[]
+  applications Application[]
+  savedBy      SavedInternship[]
+  views        InternshipView[]
+
+  @@map("internships")
+  @@index([companyId])
+  @@index([categoryId])
+  @@index([locationId])
+  @@index([workType])
+  @@index([isActive])
+  @@index([slug])
+}
+
+// Table 5: Applications - Student Applications to Internships
+model Application {
+  id           String            @id @default(cuid())
+  internshipId String            @map("internship_id")
+  studentId    String            @map("student_id")
+  
+  // Application Content
+  coverLetter  String?           @map("cover_letter")
+  resumeUrl    String?           @map("resume_url")
+  
+  // Status Tracking
+  status       ApplicationStatus @default(PENDING)
+  appliedAt    DateTime          @default(now()) @map("applied_at")
+  reviewedAt   DateTime?         @map("reviewed_at")
+  
+  // Company Response
+  companyNotes String?           @map("company_notes")
+  rejectionReason String?       @map("rejection_reason")
+  
+  createdAt    DateTime          @default(now()) @map("created_at")
+  updatedAt    DateTime          @updatedAt @map("updated_at")
+
+  // Relationships
+  internship   Internship @relation(fields: [internshipId], references: [id], onDelete: Cascade)
+  student      Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  interviews   Interview[]
+
+  @@map("applications")
+  @@unique([internshipId, studentId]) // One application per student per internship
+  @@index([studentId])
+  @@index([status])
+  @@index([appliedAt])
+}
+
+// ============================================================================
+// RELATIONSHIP TABLES (3)
+// ============================================================================
+
+// Table 6: Internship Skills - Skills Required for Each Internship
+model InternshipSkill {
+  id           String @id @default(cuid())
+  internshipId String @map("internship_id")
+  skillName    String @map("skill_name")
+  isRequired   Boolean @default(true) @map("is_required")
+
+  // Relationships
+  internship Internship @relation(fields: [internshipId], references: [id], onDelete: Cascade)
+
+  @@map("internship_skills")
+  @@unique([internshipId, skillName])
+  @@index([skillName])
+}
+
+// Table 7: Student Skills - Student Skill Profiles
+model StudentSkill {
+  id          String    @id @default(cuid())
+  studentId   String    @map("student_id")
+  skillName   String    @map("skill_name")
+  proficiency SkillLevel
+  yearsOfExperience Int? @map("years_of_experience")
+
+  // Relationships
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@map("student_skills")
+  @@unique([studentId, skillName])
+  @@index([skillName])
+}
+
+// Table 8: Saved Internships - Student Bookmarks/Favorites
+model SavedInternship {
+  id           String   @id @default(cuid())
+  studentId    String   @map("student_id")
+  internshipId String   @map("internship_id")
+  savedAt      DateTime @default(now()) @map("saved_at")
+
+  // Relationships
+  student    Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  internship Internship @relation(fields: [internshipId], references: [id], onDelete: Cascade)
+
+  @@map("saved_internships")
+  @@unique([studentId, internshipId])
+  @@index([studentId])
+}
+
+// ============================================================================
+// COMMUNICATION TABLES (3)
+// ============================================================================
+
+// Table 9: Messages - Direct Messaging Between Users
+model Message {
+  id         String    @id @default(cuid())
+  senderId   String    @map("sender_id")
+  receiverId String    @map("receiver_id")
+  subject    String?
+  content    String
+  isRead     Boolean   @default(false) @map("is_read")
+  sentAt     DateTime  @default(now()) @map("sent_at")
+
+  // Relationships
+  sender   User @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@map("messages")
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([isRead])
+  @@index([sentAt])
+}
+
+// Table 10: Notifications - System Notifications
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String           @map("user_id")
+  type      NotificationType
+  title     String
+  message   String
+  isRead    Boolean          @default(false) @map("is_read")
+  data      Json?            // Additional data for the notification
+  createdAt DateTime         @default(now()) @map("created_at")
+
+  // Relationships
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+  @@index([userId])
+  @@index([isRead])
+  @@index([type])
+  @@index([createdAt])
+}
+
+// Table 11: Interviews - Interview Scheduling & Management
+model Interview {
+  id            String          @id @default(cuid())
+  applicationId String          @map("application_id")
+  companyId     String          @map("company_id")
+  studentId     String          @map("student_id")
+  
+  // Interview Details
+  title         String
+  description   String?
+  scheduledAt   DateTime        @map("scheduled_at")
+  duration      Int             @default(60) // in minutes
+  location      String?         // Physical address or video link
+  type          InterviewType
+  
+  // Status
+  status        InterviewStatus @default(SCHEDULED)
+  
+  // Results
+  feedback      String?
+  rating        Int?            // 1-5 scale
+  outcome       InterviewOutcome?
+  
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @updatedAt @map("updated_at")
+
+  // Relationships
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  company     Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  student     Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@map("interviews")
+  @@index([applicationId])
+  @@index([studentId])
+  @@index([companyId])
+  @@index([scheduledAt])
+  @@index([status])
+}
+
+// ============================================================================
+// CONTENT TABLES (4)
+// ============================================================================
+
+// Table 12: Certificates - Student Certifications
+model Certificate {
+  id          String    @id @default(cuid())
+  studentId   String    @map("student_id")
+  name        String
+  issuer      String
+  issueDate   DateTime? @map("issue_date")
+  expiryDate  DateTime? @map("expiry_date")
+  credentialId String?  @map("credential_id")
+  credentialUrl String? @map("credential_url")
+  description String?
+  
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  // Relationships
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@map("certificates")
+  @@index([studentId])
+  @@index([issuer])
+}
+
+// Table 13: Blog Posts - Content Management
+model BlogPost {
+  id          String        @id @default(cuid())
+  title       String
+  slug        String        @unique
+  excerpt     String
+  content     String
+  featuredImage String?     @map("featured_image")
+  
+  // SEO
+  metaTitle   String?       @map("meta_title")
+  metaDescription String?   @map("meta_description")
+  
+  // Status
+  status      PostStatus    @default(DRAFT)
+  publishedAt DateTime?     @map("published_at")
+  
+  // Author (could be admin or guest author)
+  authorName  String        @map("author_name")
+  authorEmail String        @map("author_email")
+  
+  // Analytics
+  viewCount   Int           @default(0) @map("view_count")
+  
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  @@map("blog_posts")
+  @@index([slug])
+  @@index([status])
+  @@index([publishedAt])
+}
+
+// Table 14: Categories - Job Categories (IT, Marketing, etc.)
+model Category {
+  id          String @id @default(cuid())
+  name        String @unique
+  slug        String @unique
+  description String?
+  icon        String? // Icon name for UI
+  color       String? // Theme color
+  isActive    Boolean @default(true) @map("is_active")
+  sortOrder   Int     @default(0) @map("sort_order")
+
+  // Relationships
+  internships Internship[]
+
+  @@map("categories")
+  @@index([slug])
+  @@index([isActive])
+  @@index([sortOrder])
+}
+
+// Table 15: Locations - Geographic Data
+model Location {
+  id        String @id @default(cuid())
+  city      String
+  state     String
+  country   String
+  slug      String @unique
+  isActive  Boolean @default(true) @map("is_active")
+
+  // Relationships
+  internships Internship[]
+
+  @@map("locations")
+  @@unique([city, state, country])
+  @@index([slug])
+  @@index([city])
+  @@index([isActive])
+}
+
+// ============================================================================
+// ANALYTICS TABLES (2)
+// ============================================================================
+
+// Table 16: Internship Views - Analytics Tracking
+model InternshipView {
+  id           String   @id @default(cuid())
+  internshipId String   @map("internship_id")
+  viewerIp     String   @map("viewer_ip")
+  userAgent    String?  @map("user_agent")
+  referer      String?
+  viewedAt     DateTime @default(now()) @map("viewed_at")
+
+  // Relationships
+  internship Internship @relation(fields: [internshipId], references: [id], onDelete: Cascade)
+
+  @@map("internship_views")
+  @@index([internshipId])
+  @@index([viewedAt])
+}
+
+// Table 17: Search Queries - Search Analytics & Optimization
+model SearchQuery {
+  id           String   @id @default(cuid())
+  query        String
+  filters      Json?    // Store search filters as JSON
+  resultsCount Int      @map("results_count")
+  userIp       String   @map("user_ip")
+  searchedAt   DateTime @default(now()) @map("searched_at")
+
+  @@map("search_queries")
+  @@index([query])
+  @@index([searchedAt])
+}
+
+// ============================================================================
+// SYSTEM TABLES (2)
+// ============================================================================
+
+// Table 18: User Preferences - Settings Including Theme Selection
+model UserPreference {
+  id           String @id @default(cuid())
+  userId       String @unique @map("user_id")
+  
+  // UI Preferences
+  theme        String @default("teal") // teal, blue, purple
+  language     String @default("en")
+  timezone     String @default("UTC")
+  
+  // Notification Preferences
+  emailNotifications    Boolean @default(true) @map("email_notifications")
+  pushNotifications     Boolean @default(true) @map("push_notifications")
+  marketingEmails       Boolean @default(false) @map("marketing_emails")
+  
+  // Privacy Settings
+  profileVisibility     String @default("PUBLIC") // PUBLIC, PRIVATE, VERIFIED_ONLY
+  showContactInfo       Boolean @default(false) @map("show_contact_info")
+  
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Relationships
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_preferences")
+  @@index([userId])
+}
+
+// Table 19: Support Tickets - Customer Support System
+model SupportTicket {
+  id          String        @id @default(cuid())
+  userId      String        @map("user_id")
+  subject     String
+  description String
+  status      TicketStatus  @default(OPEN)
+  priority    TicketPriority @default(MEDIUM)
+  category    String        // Technical, Billing, General, etc.
+  
+  // Response
+  response    String?
+  resolvedAt  DateTime?     @map("resolved_at")
+  
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  // Relationships
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("support_tickets")
+  @@index([userId])
+  @@index([status])
+  @@index([priority])
+  @@index([category])
+}
+
+// ============================================================================
+// ENUMS
+// ============================================================================
+
+enum UserType {
+  STUDENT
+  COMPANY
+  ADMIN
+}
+
+enum CompanySize {
+  STARTUP         // 1-10
+  SMALL           // 11-50
+  MEDIUM          // 51-200
+  LARGE           // 201-1000
+  ENTERPRISE      // 1000+
+}
+
+enum WorkType {
+  REMOTE
+  ONSITE
+  HYBRID
+}
+
+enum ApplicationStatus {
+  PENDING
+  UNDER_REVIEW
+  SHORTLISTED
+  REJECTED
+  ACCEPTED
+  WITHDRAWN
+}
+
+enum SkillLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  EXPERT
+}
+
+enum NotificationType {
+  APPLICATION_UPDATE
+  NEW_MESSAGE
+  INTERVIEW_SCHEDULED
+  INTERNSHIP_REMINDER
+  SYSTEM_UPDATE
+  MARKETING
+}
+
+enum InterviewType {
+  PHONE
+  VIDEO
+  IN_PERSON
+  TECHNICAL
+  HR
+}
+
+enum InterviewStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  RESCHEDULED
+}
+
+enum InterviewOutcome {
+  SELECTED
+  REJECTED
+  ON_HOLD
+  FURTHER_ROUNDS
+}
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
