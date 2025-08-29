@@ -423,7 +423,8 @@ export default function Home() {
                       label="✓ Success State" 
                       placeholder="This field is valid"
                       className="border-green-300 focus:border-green-500 focus:ring-green-200 bg-green-50"
-                      value="Valid input"
+                      defaultValue="Valid input"
+                      readOnly
                     />
                     <Input 
                       label="✕ Error State" 
@@ -435,7 +436,7 @@ export default function Home() {
                       label="🔒 Disabled State" 
                       placeholder="Cannot interact"
                       disabled
-                      value="Read-only content"
+                      defaultValue="Read-only content"
                     />
                   </div>
                 </div>
