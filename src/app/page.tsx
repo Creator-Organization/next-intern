@@ -1,589 +1,489 @@
-'use client';
-
-import { useState } from 'react';
+// src/app/page.tsx - Direct Database Connection
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
-import { Input, Textarea } from '@/components/ui/input';
-import { useTheme } from '@/hooks/use-theme';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { 
+  ArrowRight, 
+  Users, 
+  Briefcase, 
+  TrendingUp,
+  Star,
+  CheckCircle,
+  Target,
+  Globe,
+  Shield
+} from 'lucide-react';
+import Link from 'next/link';
+import { Pool } from 'pg';
 
-export default function Home() {
-  const { theme, setTheme, themes } = useTheme();
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    position: 'frontend',
-    experience: 'intermediate',
-    skills: '',
-    coverLetter: '',
-    agreeToTerms: false
-  });
+// Create PostgreSQL connection pool
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false
+  }
+});
 
-  const handleInputChange = (field: string, value: string | boolean) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
+// Server Component - Fetch data directly from database
+async function getStats() {
+  const client = await pool.connect();
+  
+  try {
+    console.log('Fetching real data from database...');
+
+    // Get basic counts
+    const statsQuery = `
+      SELECT 
+        (SELECT COUNT(*) FROM internships) as total_internships,
+        (SELECT COUNT(*) FROM internships WHERE is_active = true) as active_internships,
+        (SELECT COUNT(*) FROM companies) as total_companies,
+        (SELECT COUNT(*) FROM companies WHERE is_verified = true) as verified_companies,
+        (SELECT COUNT(*) FROM students) as total_students,
+        (SELECT COUNT(*) FROM applications) as total_applications,
+        (SELECT COUNT(*) FROM applications WHERE status = 'ACCEPTED') as accepted_applications
+    `;
+    
+    const statsResult = await client.query(statsQuery);
+    const stats = statsResult.rows[0];
+
+    // Get categories
+    const categoriesQuery = `
+      SELECT id, name, slug, description, color, icon
+      FROM categories 
+      WHERE is_active = true 
+      ORDER BY sort_order ASC 
+      LIMIT 6
+    `;
+    const categoriesResult = await client.query(categoriesQuery);
+    const categories = categoriesResult.rows;
+
+    // Get recent internships with company and location info
+    const internshipsQuery = `
+      SELECT 
+        i.id, i.title, i.description, i.stipend, i.slug, i.application_count,
+        c.company_name,
+        cat.name as category_name,
+        l.city, l.state
+      FROM internships i
+      JOIN companies c ON i.company_id = c.id
+      JOIN categories cat ON i.category_id = cat.id
+      JOIN locations l ON i.location_id = l.id
+      WHERE i.is_active = true
+      ORDER BY i.created_at DESC
+      LIMIT 3
+    `;
+    const internshipsResult = await client.query(internshipsQuery);
+    const recentInternships = internshipsResult.rows;
+
+    // Calculate success rate
+    const successRate = stats.total_students > 0 
+      ? Math.round((stats.accepted_applications / stats.total_students) * 100) 
+      : 0;
+
+    console.log('Real data fetched successfully:', {
+      totalInternships: stats.total_internships,
+      activeInternships: stats.active_internships,
+      totalCompanies: stats.total_companies,
+      verifiedCompanies: stats.verified_companies,
+      totalStudents: stats.total_students,
+      totalApplications: stats.total_applications,
+      successRate,
+      categoriesCount: categories.length,
+      recentInternshipsCount: recentInternships.length
+    });
+
+    return {
+      totalInternships: parseInt(stats.total_internships),
+      activeInternships: parseInt(stats.active_internships),
+      totalCompanies: parseInt(stats.total_companies),
+      verifiedCompanies: parseInt(stats.verified_companies),
+      totalStudents: parseInt(stats.total_students),
+      totalApplications: parseInt(stats.total_applications),
+      successRate,
+      categories,
+      recentInternships
+    };
+
+  } catch (error) {
+    console.error('Database connection failed:', error);
+    throw new Error(`Failed to fetch data from database: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  } finally {
+    client.release();
+  }
+}
+
+export default async function LandingPage() {
+  const stats = await getStats();
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-7xl mx-auto space-y-8">
-        {/* Header Card */}
-        <Card className="bg-gradient-to-r from-primary-50 to-primary-100 border-primary-200">
-          <CardHeader>
-            <CardTitle className="font-manrope text-4xl font-bold text-primary-800">
-              NextIntern Design System
-            </CardTitle>
-            <CardDescription className="text-lg text-primary-600">
-              Complete theme system with Teal-Cyan, Blue, and Purple-Indigo color schemes
-            </CardDescription>
-          </CardHeader>
-        </Card>
+    <div className="min-h-screen bg-white">
+      {/* Navigation Header */}
+      <nav className="border-b border-gray-200 bg-white/95 backdrop-blur-sm sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center">
+              <Link href="/" className="text-2xl font-bold font-manrope text-primary-600">
+                NextIntern
+              </Link>
+            </div>
+            <div className="hidden md:flex items-center space-x-8">
+              <Link href="/internships" className="text-gray-600 hover:text-primary-600 transition-colors">
+                Browse Internships
+              </Link>
+              <Link href="/companies" className="text-gray-600 hover:text-primary-600 transition-colors">
+                Companies
+              </Link>
+              <Link href="/about" className="text-gray-600 hover:text-primary-600 transition-colors">
+                About
+              </Link>
+              <div className="flex items-center space-x-3">
+                <Link href="/auth/student">
+                  <Button variant="secondary" size="sm">
+                    Sign In
+                  </Button>
+                </Link>
+                <Link href="/auth/student">
+                  <Button size="sm">
+                    Get Started
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </nav>
 
-        {/* Theme Switcher */}
-        <Card variant="elevated" className="border-primary-200">
-          <CardHeader>
-            <CardTitle className="text-primary-700 font-manrope">
-              Theme Selector: <span className="capitalize">{theme}</span>
-            </CardTitle>
-            <CardDescription>
-              {themes.find(t => t.value === theme)?.description} • Switch themes to see live changes
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-3">
-              {themes.map((themeOption) => (
-                <Button
-                  key={themeOption.value}
-                  variant={theme === themeOption.value ? 'primary' : 'secondary'}
-                  onClick={() => setTheme(themeOption.value)}
-                  size="md"
-                  className={`transition-all duration-200 ${
-                    theme === themeOption.value 
-                      ? 'bg-primary hover:bg-primary-hover shadow-lg scale-105 border-primary-300' 
-                      : 'hover:border-primary-200 hover:bg-primary-50'
-                  }`}
-                >
-                  {themeOption.label}
-                </Button>
+      {/* Hero Section */}
+      <section className="relative bg-gradient-to-br from-primary-50 via-white to-primary-100 py-20 lg:py-28">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div className="space-y-8">
+              <div className="space-y-4">
+                <h1 className="text-4xl lg:text-6xl font-bold font-manrope text-gray-900 leading-tight">
+                  Where 
+                  <span className="text-primary-600"> Careers</span>
+                  <br />
+                  Begin
+                </h1>
+                <p className="text-xl text-gray-600 leading-relaxed">
+                  Connect with {stats.verifiedCompanies}+ verified companies and discover {stats.activeInternships}+ active internship opportunities. 
+                  Start your career journey with NextIntern - the platform trusted by {stats.totalStudents}+ students.
+                </p>
+              </div>
+              
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Link href="/auth/student">
+                  <Button size="lg" className="w-full sm:w-auto group">
+                    Find Your Internship
+                    <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                  </Button>
+                </Link>
+                <Link href="/auth/company">
+                  <Button variant="secondary" size="lg" className="w-full sm:w-auto">
+                    Hire Top Talent
+                  </Button>
+                </Link>
+              </div>
+
+              {/* Trust Indicators */}
+              <div className="flex items-center space-x-6 pt-4">
+                <div className="flex items-center space-x-2">
+                  <Star className="h-5 w-5 text-yellow-400 fill-current" />
+                  <span className="text-sm text-gray-600">4.9/5 rating</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <CheckCircle className="h-5 w-5 text-green-500" />
+                  <span className="text-sm text-gray-600">{stats.totalStudents}+ students</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Shield className="h-5 w-5 text-primary-500" />
+                  <span className="text-sm text-gray-600">{stats.verifiedCompanies} verified companies</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Hero Visual */}
+            <div className="relative">
+              <div className="relative bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden">
+                <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-6 py-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-3 h-3 bg-red-400 rounded-full"></div>
+                    <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
+                    <div className="w-3 h-3 bg-green-400 rounded-full"></div>
+                    <span className="text-white font-medium ml-4">NextIntern Dashboard</span>
+                  </div>
+                </div>
+                <div className="p-6 space-y-4">
+                  <div className="space-y-3">
+                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                    <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <Card className="p-4">
+                      <div className="h-8 bg-primary-100 rounded mb-2"></div>
+                      <div className="h-3 bg-gray-200 rounded"></div>
+                    </Card>
+                    <Card className="p-4">
+                      <div className="h-8 bg-primary-100 rounded mb-2"></div>
+                      <div className="h-3 bg-gray-200 rounded"></div>
+                    </Card>
+                  </div>
+                </div>
+              </div>
+              {/* Floating elements */}
+              <div className="absolute -top-4 -right-4 bg-white rounded-lg shadow-lg p-3 border border-gray-200">
+                <div className="flex items-center space-x-2">
+                  <TrendingUp className="h-5 w-5 text-green-500" />
+                  <span className="text-sm font-medium">+{stats.totalApplications} applications</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Stats Section */}
+      <section className="py-16 bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+            {[
+              { number: `${stats.activeInternships}+`, label: "Active Internships", icon: Briefcase },
+              { number: `${stats.verifiedCompanies}+`, label: "Partner Companies", icon: Users },
+              { number: `${stats.totalStudents}+`, label: "Students Registered", icon: Target },
+              { number: `${stats.successRate}%`, label: "Success Rate", icon: TrendingUp },
+            ].map((stat, index) => (
+              <div key={index} className="text-center">
+                <div className="flex justify-center mb-4">
+                  <div className="w-16 h-16 bg-primary-50 rounded-full flex items-center justify-center">
+                    <stat.icon className="h-8 w-8 text-primary-600" />
+                  </div>
+                </div>
+                <div className="text-3xl font-bold text-gray-900 font-manrope">
+                  {stat.number}
+                </div>
+                <div className="text-gray-600 mt-1">
+                  {stat.label}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Featured Categories */}
+      <section className="py-20 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 font-manrope mb-4">
+              Explore Top Categories
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Find internships across diverse fields and industries
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {stats.categories.map((category) => (
+              <Link href={`/categories/${category.slug}`} key={category.id}>
+                <Card className="p-6 hover:shadow-lg transition-shadow border-0 bg-white group cursor-pointer">
+                  <CardHeader className="p-0 pb-4">
+                    <div 
+                      className="w-12 h-12 rounded-lg flex items-center justify-center mb-4"
+                      style={{ backgroundColor: category.color ? `${category.color}15` : '#f0f9ff' }}
+                    >
+                      <div 
+                        className="w-6 h-6 rounded"
+                        style={{ backgroundColor: category.color || '#0891b2' }}
+                      ></div>
+                    </div>
+                    <CardTitle className="text-xl font-manrope text-gray-900 group-hover:text-primary-600 transition-colors">
+                      {category.name}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <p className="text-gray-600 leading-relaxed mb-4">
+                      {category.description || `Explore exciting ${category.name.toLowerCase()} opportunities`}
+                    </p>
+                    <div className="flex items-center text-primary-600 font-medium">
+                      View Opportunities
+                      <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Recent Internships */}
+      {stats.recentInternships.length > 0 && (
+        <section className="py-20 bg-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 font-manrope mb-4">
+                Latest Opportunities
+              </h2>
+              <p className="text-xl text-gray-600">
+                Fresh internships posted by top companies
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-8">
+              {stats.recentInternships.map((internship) => (
+                <Card key={internship.id} className="border-0 bg-gray-50 hover:bg-white hover:shadow-lg transition-all">
+                  <CardContent className="p-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="text-sm text-gray-500">
+                        {internship.company_name}
+                      </div>
+                      <div className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
+                        Active
+                      </div>
+                    </div>
+                    
+                    <h3 className="text-xl font-bold text-gray-900 mb-3 font-manrope">
+                      {internship.title}
+                    </h3>
+                    
+                    <div className="space-y-2 mb-4">
+                      <div className="flex items-center text-sm text-gray-600">
+                        <Globe className="h-4 w-4 mr-2" />
+                        {internship.city}, {internship.state}
+                      </div>
+                      <div className="flex items-center text-sm text-gray-600">
+                        <Briefcase className="h-4 w-4 mr-2" />
+                        {internship.category_name}
+                      </div>
+                      {internship.stipend && (
+                        <div className="flex items-center text-sm text-gray-600">
+                          <Target className="h-4 w-4 mr-2" />
+                          ₹{parseInt(internship.stipend).toLocaleString()}/month
+                        </div>
+                      )}
+                    </div>
+
+                    <p className="text-gray-600 text-sm mb-4 line-clamp-3">
+                      {internship.description}
+                    </p>
+
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-500">
+                        {internship.application_count} applications
+                      </span>
+                      <Link href={`/internships/${internship.slug}`}>
+                        <Button size="sm">
+                          Apply Now
+                        </Button>
+                      </Link>
+                    </div>
+                  </CardContent>
+                </Card>
               ))}
             </div>
-          </CardContent>
-        </Card>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Enhanced Button Showcase */}
-          <Card variant="default" className="border-primary-200">
-            <CardHeader>
-              <CardTitle className="text-primary-700 font-manrope">Button System</CardTitle>
-              <CardDescription>Complete button variants with themed colors</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                {/* Primary Button Variants */}
-                <div className="space-y-3">
-                  <h4 className="font-semibold text-gray-900 flex items-center gap-2">
-                    <span className="w-2 h-2 bg-primary rounded-full"></span>
-                    Primary Variants
-                  </h4>
-                  <div className="flex flex-wrap gap-3">
-                    <Button className="bg-primary hover:bg-primary-hover">Primary</Button>
-                    <Button className="bg-primary-light hover:bg-primary">Light Primary</Button>
-                    <Button variant="ghost" className="text-primary-600 hover:bg-primary-50 border border-primary-200">
-                      Ghost Primary
-                    </Button>
-                  </div>
-                </div>
+            <div className="text-center mt-12">
+              <Link href="/internships">
+                <Button size="lg" variant="secondary">
+                  View All Internships
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
 
-                {/* Semantic Colors */}
-                <div className="space-y-3">
-                  <h4 className="font-semibold text-gray-900 flex items-center gap-2">
-                    <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                    Semantic States
-                  </h4>
-                  <div className="flex flex-wrap gap-3">
-                    <Button className="bg-[rgb(var(--success))] hover:opacity-90 text-white shadow-md">
-                      ✓ Success
-                    </Button>
-                    <Button className="bg-[rgb(var(--error))] hover:opacity-90 text-white shadow-md">
-                      ✕ Error
-                    </Button>
-                    <Button className="bg-[rgb(var(--warning))] hover:opacity-90 text-white shadow-md">
-                      ⚠ Warning
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Accent Colors */}
-                <div className="space-y-3">
-                  <h4 className="font-semibold text-gray-900 flex items-center gap-2">
-                    <span className="w-2 h-2 bg-cyan-500 rounded-full"></span>
-                    Accent Colors
-                  </h4>
-                  <div className="flex flex-wrap gap-3">
-                    <Button className="bg-[rgb(var(--accent-1))] hover:opacity-90 text-white">Accent 1</Button>
-                    <Button className="bg-[rgb(var(--accent-2))] hover:opacity-90 text-white">Accent 2</Button>
-                    <Button className="bg-[rgb(var(--accent-3))] hover:opacity-90 text-white">Accent 3</Button>
-                  </div>
-                </div>
-
-                {/* Interactive States */}
-                <div className="space-y-3">
-                  <h4 className="font-semibold text-gray-900 flex items-center gap-2">
-                    <span className="w-2 h-2 bg-gray-400 rounded-full"></span>
-                    Interactive States
-                  </h4>
-                  <div className="grid grid-cols-2 gap-3">
-                    <Button size="sm" className="bg-primary hover:bg-primary-hover">Small</Button>
-                    <Button size="md" className="bg-primary hover:bg-primary-hover">Medium</Button>
-                    <Button size="lg" className="bg-primary hover:bg-primary-hover col-span-2">Large Button</Button>
-                  </div>
-                  <div className="flex gap-3">
-                    <Button loading className="bg-primary">Loading State</Button>
-                    <Button disabled className="bg-primary opacity-50">Disabled</Button>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Enhanced Card Showcase */}
-          <Card variant="default" className="border-primary-200">
-            <CardHeader>
-              <CardTitle className="text-primary-700 font-manrope">Card System</CardTitle>
-              <CardDescription>Responsive card variants with themed styling</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <Card variant="default" padding="sm" className="border-primary-200 bg-gradient-to-br from-white to-primary-50">
-                  <CardTitle className="text-base text-primary-600 flex items-center gap-2">
-                    <span className="w-3 h-3 bg-primary-500 rounded-full"></span>
-                    Default Card
-                  </CardTitle>
-                  <CardDescription>Standard card with gradient background</CardDescription>
-                </Card>
-
-                <Card variant="interactive" padding="sm" className="hover:border-primary-300 hover:shadow-xl">
-                  <CardTitle className="text-base text-primary-700 flex items-center gap-2">
-                    <span className="w-3 h-3 bg-primary-600 rounded-full animate-pulse"></span>
-                    Interactive Card
-                  </CardTitle>
-                  <CardDescription>Hover to see enhanced lift effect</CardDescription>
-                </Card>
-
-                <Card variant="elevated" padding="sm" className="bg-primary-100 border-primary-300">
-                  <CardTitle className="text-base text-primary-800 flex items-center gap-2">
-                    <span className="w-3 h-3 bg-primary-700 rounded-full"></span>
-                    Themed Card
-                  </CardTitle>
-                  <CardDescription className="text-primary-600">Primary-100 background with themed text</CardDescription>
-                </Card>
-
-                <Card variant="bordered" padding="sm" className="border-2 border-primary-200 hover:border-primary-400">
-                  <CardTitle className="text-base text-primary-700 flex items-center gap-2">
-                    <span className="w-3 h-3 bg-primary-600 rounded-full"></span>
-                    Bordered Card
-                  </CardTitle>
-                  <CardDescription>Thick themed border with hover states</CardDescription>
-                </Card>
-              </div>
-            </CardContent>
-          </Card>
+      {/* CTA Section */}
+      <section className="py-20 bg-gradient-to-r from-primary-600 to-primary-700">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl lg:text-4xl font-bold text-white font-manrope mb-6">
+            Ready to Start Your Career Journey?
+          </h2>
+          <p className="text-xl text-primary-100 mb-8 max-w-2xl mx-auto">
+            Join {stats.totalStudents}+ students who are building their careers with NextIntern. 
+            Your next opportunity is just one click away.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/auth/student">
+              <Button size="lg" variant="secondary" className="w-full sm:w-auto">
+                Join as Student
+              </Button>
+            </Link>
+            <Link href="/auth/company">
+              <Button size="lg" variant="secondary" className="w-full sm:w-auto bg-white text-primary-600 hover:bg-gray-100">
+                Post Internships
+              </Button>
+            </Link>
+          </div>
         </div>
+      </section>
 
-        {/* Enhanced Color Palette */}
-        <Card variant="elevated" className="border-primary-200">
-          <CardHeader>
-            <CardTitle className="text-primary-700 font-manrope text-2xl">Complete Color System</CardTitle>
-            <CardDescription className="text-lg">
-              <span className="font-medium text-primary-600">{themes.find(t => t.value === theme)?.label}</span> 
-              • {themes.find(t => t.value === theme)?.description}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {/* Primary Scale with Better Labels */}
-              <div className="space-y-4">
-                <h4 className="font-semibold text-gray-900 text-lg">Primary Scale</h4>
-                <div className="grid grid-cols-2 gap-2">
-                  {[50, 100, 200, 300, 400, 500, 600, 700, 800, 900].map((shade) => (
-                    <div key={shade} className="space-y-2">
-                      <div 
-                        className={`h-14 rounded-lg border-2 flex flex-col items-center justify-center text-xs font-bold transition-transform hover:scale-105 cursor-pointer ${
-                          shade >= 500 ? 'text-white border-white/20' : 'text-gray-800 border-gray-200'
-                        }`}
-                        style={{ backgroundColor: `rgb(var(--primary-${shade}))` }}
-                      >
-                        <span>{shade}</span>
-                        {shade === 500 && <span className="text-xs opacity-80">MAIN</span>}
-                      </div>
-                      <div className="text-xs text-center text-gray-500 font-medium">
-                        {shade === 50 ? 'Backgrounds' : 
-                         shade === 100 ? 'Surfaces' :
-                         shade === 200 ? 'Borders' :
-                         shade === 500 ? 'Primary' :
-                         shade === 600 ? 'Hover' :
-                         shade === 700 ? 'Active' : ''}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Enhanced Semantic Colors */}
-              <div className="space-y-4">
-                <h4 className="font-semibold text-gray-900 text-lg">Semantic Colors</h4>
-                <div className="space-y-3">
-                  {[
-                    { name: 'Success', var: '--success', icon: '✓', desc: 'Positive actions' },
-                    { name: 'Error', var: '--error', icon: '✕', desc: 'Negative feedback' },
-                    { name: 'Warning', var: '--warning', icon: '⚠', desc: 'Caution states' }
-                  ].map((color) => (
-                    <div key={color.name} className="space-y-1">
-                      <div 
-                        className="h-14 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-md hover:scale-105 transition-transform cursor-pointer"
-                        style={{ backgroundColor: `rgb(var(${color.var}))` }}
-                      >
-                        {color.icon} {color.name}
-                      </div>
-                      <p className="text-xs text-gray-500 text-center">{color.desc}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Enhanced Accent Colors */}
-              <div className="space-y-4">
-                <h4 className="font-semibold text-gray-900 text-lg">Accent Colors</h4>
-                <div className="space-y-3">
-                  {[
-                    { name: 'Accent 1', var: '--accent-1', desc: 'Highlights' },
-                    { name: 'Accent 2', var: '--accent-2', desc: 'Secondary brand' },
-                    { name: 'Accent 3', var: '--accent-3', desc: 'Deep accents' }
-                  ].map((color) => (
-                    <div key={color.name} className="space-y-1">
-                      <div 
-                        className="h-14 rounded-lg flex items-center justify-center text-white font-bold shadow-md hover:scale-105 transition-transform cursor-pointer"
-                        style={{ backgroundColor: `rgb(var(${color.var}))` }}
-                      >
-                        {color.name}
-                      </div>
-                      <p className="text-xs text-gray-500 text-center">{color.desc}</p>
-                    </div>
-                  ))}
-                </div>
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid md:grid-cols-4 gap-8">
+            <div>
+              <h3 className="text-2xl font-bold font-manrope text-white mb-4">
+                NextIntern
+              </h3>
+              <p className="text-gray-400 leading-relaxed">
+                Connecting students with companies for meaningful internship experiences.
+              </p>
+            </div>
+            
+            <div>
+              <h4 className="font-semibold text-white mb-4">For Students</h4>
+              <div className="space-y-2">
+                <Link href="/internships" className="block text-gray-400 hover:text-white transition-colors">
+                  Browse Internships
+                </Link>
+                <Link href="/auth/student" className="block text-gray-400 hover:text-white transition-colors">
+                  Sign Up
+                </Link>
+                <Link href="/resources" className="block text-gray-400 hover:text-white transition-colors">
+                  Career Resources
+                </Link>
               </div>
             </div>
-
-            {/* Gray Scale */}
-            <div className="mt-8 pt-8 border-t border-primary-100">
-              <h4 className="font-semibold text-gray-900 text-lg mb-4">Gray Scale System</h4>
-              <div className="grid grid-cols-4 gap-4">
-                {[
-                  { shade: 50, usage: 'Page backgrounds', role: 'Base' },
-                  { shade: 100, usage: 'Card surfaces', role: 'Surface' },
-                  { shade: 500, usage: 'Secondary text', role: 'Text-2' },
-                  { shade: 900, usage: 'Primary text', role: 'Text-1' }
-                ].map((gray) => (
-                  <div key={gray.shade} className="space-y-2">
-                    <div 
-                      className={`h-16 rounded-lg border-2 flex flex-col items-center justify-center font-bold transition-transform hover:scale-105 cursor-pointer ${
-                        gray.shade >= 500 ? 'text-white border-white/20' : 'text-gray-800 border-gray-200'
-                      }`}
-                      style={{ backgroundColor: `rgb(var(--gray-${gray.shade}))` }}
-                    >
-                      <span>Gray {gray.shade}</span>
-                      <span className="text-xs opacity-80">{gray.role}</span>
-                    </div>
-                    <div className="text-xs text-center text-gray-500 font-medium">{gray.usage}</div>
-                  </div>
-                ))}
+            
+            <div>
+              <h4 className="font-semibold text-white mb-4">For Companies</h4>
+              <div className="space-y-2">
+                <Link href="/auth/company" className="block text-gray-400 hover:text-white transition-colors">
+                  Post Internships
+                </Link>
+                <Link href="/pricing" className="block text-gray-400 hover:text-white transition-colors">
+                  Pricing
+                </Link>
+                <Link href="/contact" className="block text-gray-400 hover:text-white transition-colors">
+                  Contact Sales
+                </Link>
               </div>
             </div>
-          </CardContent>
-          <CardFooter className="pt-6 border-t border-primary-100">
-            <div className="flex flex-wrap gap-3">
-              <Button variant="ghost" size="sm" className="text-primary-600 hover:bg-primary-50 border border-primary-200">
-                🎨 Export Palette
-              </Button>
-              <Button variant="secondary" size="sm" className="hover:border-primary-200">
-                📖 View Documentation
-              </Button>
-              <Button variant="secondary" size="sm" className="hover:border-primary-200">
-                💾 Save Config
-              </Button>
+            
+            <div>
+              <h4 className="font-semibold text-white mb-4">Company</h4>
+              <div className="space-y-2">
+                <Link href="/about" className="block text-gray-400 hover:text-white transition-colors">
+                  About Us
+                </Link>
+                <Link href="/privacy" className="block text-gray-400 hover:text-white transition-colors">
+                  Privacy Policy
+                </Link>
+                <Link href="/terms" className="block text-gray-400 hover:text-white transition-colors">
+                  Terms of Service
+                </Link>
+              </div>
             </div>
-          </CardFooter>
-        </Card>
-
-        {/* Enhanced Typography & Interactive Elements */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <Card className="border-primary-200">
-            <CardHeader>
-              <CardTitle className="font-manrope text-primary-700 text-xl">Typography System</CardTitle>
-              <CardDescription>Inter + Manrope font pairing with themed colors</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <h1 className="font-manrope text-3xl font-bold text-primary-800">Heading 1 - Manrope Bold</h1>
-                <h2 className="font-manrope text-2xl font-semibold text-primary-700">Heading 2 - Manrope Semi</h2>
-                <h3 className="font-manrope text-xl font-medium text-primary-600">Heading 3 - Manrope Medium</h3>
-                <p className="text-gray-900 leading-relaxed">Body text using Inter font family for optimal readability. This demonstrates how the typography system maintains consistency across different themes.</p>
-                <p className="text-gray-500 text-sm">Secondary text in gray-500 for less important information and descriptions.</p>
-              </div>
-              <div className="bg-primary-50 p-4 rounded-lg border border-primary-200">
-                <p className="text-primary-700 font-medium">📝 Typography scales beautifully across all three themes</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-primary-200">
-            <CardHeader>
-              <CardTitle className="text-primary-700 font-manrope text-xl">Interactive Elements</CardTitle>
-              <CardDescription>Hover and focus state demonstrations</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-3">
-                <div className="text-sm font-medium text-gray-700">🎯 Interactive Demo Zone:</div>
-                <div className="p-4 bg-primary-50 hover:bg-primary-100 rounded-lg border border-primary-200 hover:border-primary-300 transition-all cursor-pointer hover:shadow-md">
-                  <p className="text-primary-700 font-medium">Hover for background transition</p>
-                  <p className="text-primary-600 text-sm">Background: primary-50 → primary-100</p>
-                </div>
-                <div className="p-4 bg-white hover:bg-primary-50 rounded-lg border hover:border-primary-200 hover:shadow-lg transition-all cursor-pointer transform hover:-translate-y-1">
-                  <p className="text-gray-800 font-medium">Hover for lift effect</p>
-                  <p className="text-gray-600 text-sm">Includes shadow and transform</p>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="p-3 bg-gradient-to-r from-primary-400 to-primary-600 text-white rounded-lg cursor-pointer hover:from-primary-500 hover:to-primary-700 transition-all text-center font-medium">
-                    Gradient
-                  </div>
-                  <div className="p-3 bg-[rgb(var(--accent-1))] text-white rounded-lg cursor-pointer hover:opacity-80 transition-all text-center font-medium">
-                    Accent
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          </div>
+          
+          <div className="border-t border-gray-800 mt-8 pt-8 text-center">
+            <p className="text-gray-400">
+              © 2025 NextIntern. All rights reserved.
+            </p>
+          </div>
         </div>
-
-        {/* Enhanced Form Components */}
-        <Card variant="elevated" className="border-primary-200">
-          <CardHeader>
-            <CardTitle className="text-primary-700 font-manrope text-2xl">Form Component System</CardTitle>
-            <CardDescription className="text-lg">
-              Interactive form elements with real-time theme switching and validation states
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Enhanced Basic Inputs */}
-              <div className="space-y-6">
-                <div>
-                  <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                    <span className="w-3 h-3 bg-primary-500 rounded-full"></span>
-                    Basic Form Elements
-                  </h4>
-                  <div className="space-y-4">
-                    <Input 
-                      label="Full Name" 
-                      placeholder="Enter your full name"
-                      value={formData.name}
-                      onChange={(e) => handleInputChange('name', e.target.value)}
-                      className="focus:border-primary focus:ring-primary-200 hover:border-primary-300 transition-all"
-                    />
-                    <Input 
-                      label="Email Address" 
-                      type="email" 
-                      placeholder="your@email.com"
-                      value={formData.email}
-                      onChange={(e) => handleInputChange('email', e.target.value)}
-                      className="focus:border-primary focus:ring-primary-200 hover:border-primary-300 transition-all"
-                    />
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700">Position Type</label>
-                      <select 
-                        value={formData.position}
-                        onChange={(e) => handleInputChange('position', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary hover:border-primary-300 transition-all bg-white"
-                      >
-                        <option value="frontend">Frontend Developer</option>
-                        <option value="backend">Backend Developer</option>
-                        <option value="fullstack">Full Stack Developer</option>
-                        <option value="design">UI/UX Designer</option>
-                        <option value="data">Data Analyst</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                    <span className="w-3 h-3 bg-green-500 rounded-full"></span>
-                    Input States Demo
-                  </h4>
-                  <div className="space-y-4">
-                    <Input 
-                      label="✓ Success State" 
-                      placeholder="This field is valid"
-                      className="border-green-300 focus:border-green-500 focus:ring-green-200 bg-green-50"
-                      defaultValue="Valid input"
-                      readOnly
-                    />
-                    <Input 
-                      label="✕ Error State" 
-                      error="This field is required"
-                      placeholder="Invalid input"
-                      className="border-red-300 focus:border-red-500 focus:ring-red-200 bg-red-50"
-                    />
-                    <Input 
-                      label="🔒 Disabled State" 
-                      placeholder="Cannot interact"
-                      disabled
-                      defaultValue="Read-only content"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Enhanced Advanced Forms */}
-              <div className="space-y-6">
-                <div>
-                  <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                    <span className="w-3 h-3 bg-purple-500 rounded-full"></span>
-                    Advanced Form Elements
-                  </h4>
-                  <div className="space-y-4">
-                    <Textarea
-                      label="Cover Letter"
-                      placeholder="Tell us about your experience and why you're interested..."
-                      value={formData.coverLetter}
-                      onChange={(e) => handleInputChange('coverLetter', e.target.value)}
-                      className="min-h-[100px] focus:border-primary focus:ring-primary-200 hover:border-primary-300 transition-all resize-none"
-                    />
-                    <Input 
-                      label="Skills & Technologies" 
-                      placeholder="React, TypeScript, Node.js, Python..."
-                      value={formData.skills}
-                      onChange={(e) => handleInputChange('skills', e.target.value)}
-                      className="focus:border-primary focus:ring-primary-200 hover:border-primary-300 transition-all"
-                    />
-
-                    {/* Experience Level Radio */}
-                    <div className="space-y-3">
-                      <label className="text-sm font-medium text-gray-700">Experience Level</label>
-                      <div className="flex gap-6">
-                        {[
-                          { value: 'beginner', label: '🌱 Beginner' },
-                          { value: 'intermediate', label: '🚀 Intermediate' },
-                          { value: 'advanced', label: '⭐ Advanced' }
-                        ].map((option) => (
-                          <label key={option.value} className="flex items-center space-x-2 cursor-pointer">
-                            <input
-                              type="radio"
-                              name="experience"
-                              value={option.value}
-                              checked={formData.experience === option.value}
-                              onChange={(e) => handleInputChange('experience', e.target.value)}
-                              className="w-4 h-4 text-primary bg-gray-100 border-gray-300 focus:ring-primary-500 focus:ring-2"
-                            />
-                            <span className="text-sm text-gray-700 font-medium">{option.label}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                    <span className="w-3 h-3 bg-cyan-500 rounded-full"></span>
-                    Theme Focus Demo
-                  </h4>
-                  <div className="space-y-4">
-                    <div className="p-4 bg-primary-50 rounded-lg border border-primary-200">
-                      <p className="text-sm text-primary-700 mb-3 font-medium">
-                        💡 Focus on the input below to see themed focus ring:
-                      </p>
-                      <Input 
-                        placeholder="Focus me to see the themed ring color!"
-                        className="focus:border-primary focus:ring-2 focus:ring-primary-300 hover:border-primary-300 transition-all"
-                      />
-                      <p className="text-xs text-primary-600 mt-2">Ring color changes with your selected theme</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Enhanced Sample Form */}
-            <div className="mt-8 pt-8 border-t border-primary-100">
-              <h4 className="font-semibold text-gray-900 mb-4 text-lg flex items-center gap-2">
-                <span className="w-4 h-4 bg-primary-600 rounded-full"></span>
-                Complete Internship Application Form
-              </h4>
-              <div className="bg-gradient-to-br from-primary-50 to-white p-6 rounded-xl border-2 border-primary-100">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Input 
-                    label="🏢 Company Name" 
-                    placeholder="Google, Microsoft, Startup Inc..."
-                    className="focus:border-primary focus:ring-primary-200 hover:border-primary-300 transition-all"
-                  />
-                  <Input 
-                    label="💼 Position Title" 
-                    placeholder="Software Engineering Intern"
-                    className="focus:border-primary focus:ring-primary-200 hover:border-primary-300 transition-all"
-                  />
-                  <Input 
-                    label="💰 Expected Stipend" 
-                    placeholder="₹25,000/month"
-                    className="focus:border-primary focus:ring-primary-200 hover:border-primary-300 transition-all"
-                  />
-                  <Input 
-                    label="📍 Preferred Location" 
-                    placeholder="Bangalore, Remote, Hybrid..."
-                    className="focus:border-primary focus:ring-primary-200 hover:border-primary-300 transition-all"
-                  />
-                </div>
-                
-                <div className="mt-6">
-                  <Textarea
-                    label="🎯 Why are you interested in this internship?"
-                    placeholder="Share your motivation, goals, and what you hope to learn from this experience..."
-                    className="focus:border-primary focus:ring-primary-200 hover:border-primary-300 transition-all"
-                    rows={4}
-                  />
-                </div>
-
-                {/* Terms Checkbox */}
-                <div className="mt-6 flex items-start space-x-3">
-                  <input
-                    type="checkbox"
-                    id="agreeTerms"
-                    checked={formData.agreeToTerms}
-                    onChange={(e) => handleInputChange('agreeToTerms', e.target.checked)}
-                    className="mt-1 w-4 h-4 text-primary bg-gray-100 border-gray-300 rounded focus:ring-primary-500 focus:ring-2"
-                  />
-                  <label htmlFor="agreeTerms" className="text-sm text-gray-700">
-                    I agree to the <span className="text-primary-600 font-medium cursor-pointer hover:underline">Terms and Conditions</span> and <span className="text-primary-600 font-medium cursor-pointer hover:underline">Privacy Policy</span>
-                  </label>
-                </div>
-
-                <div className="mt-6 flex flex-wrap gap-3">
-                  <Button 
-                    className="bg-primary hover:bg-primary-hover shadow-md"
-                    disabled={!formData.agreeToTerms}
-                  >
-                    🚀 Submit Application
-                  </Button>
-                  <Button variant="secondary" className="hover:border-primary-200 hover:bg-primary-50">
-                    💾 Save as Draft
-                  </Button>
-                  <Button variant="ghost" className="text-primary-600 hover:bg-primary-50 border border-primary-200">
-                    📋 Preview
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      </footer>
     </div>
   );
 }
