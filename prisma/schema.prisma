@@ -1,5 +1,6 @@
 // NextIntern Database Schema
-// 19 Tables Total - Complete Internship Platform
+// 22 Tables Total - Complete Internship Platform with Advanced Authentication
+// Phase 2 Day 5 Updates
 
 generator client {
   provider = "prisma-client-js"
@@ -14,7 +15,7 @@ datasource db {
 // CORE TABLES (5)
 // ============================================================================
 
-// Table 1: Users - Authentication & Base User Data
+// Table 1: Users - Authentication & Base User Data (UPDATED)
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
@@ -28,6 +29,12 @@ model User {
   // OAuth fields
   googleId String? @unique @map("google_id")
 
+  // PHASE 2 DAY 5: Enhanced Security Fields
+  lastLoginAt    DateTime? @map("last_login_at")
+  loginAttempts  Int       @default(0) @map("login_attempts")
+  lockedUntil    DateTime? @map("locked_until")
+  verifiedAt     DateTime? @map("verified_at")
+
   // Relationships
   student       Student?
   company       Company?
@@ -36,6 +43,11 @@ model User {
   receivedMessages Message[] @relation("ReceivedMessages")
   notifications Notification[]
   supportTickets SupportTicket[]
+
+  // PHASE 2 DAY 5: New Authentication Relationships
+  passwordResetTokens     PasswordResetToken[]
+  emailVerificationTokens EmailVerificationToken[]
+  securityLogs           SecurityLog[]
 
   @@map("users")
   @@index([email])
@@ -545,6 +557,65 @@ model SupportTicket {
   @@index([status])
   @@index([priority])
   @@index([category])
+}
+
+// ============================================================================
+// PHASE 2 DAY 5: AUTHENTICATION EXTENSIONS (3 NEW TABLES)
+// ============================================================================
+
+// Table 20: Password Reset Tokens
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  // Relationships
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("password_reset_tokens")
+  @@index([token])
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+// Table 21: Email Verification Tokens
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  // Relationships
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("email_verification_tokens")
+  @@index([token])
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+// Table 22: Security Audit Logs
+model SecurityLog {
+  id         String   @id @default(cuid())
+  userId     String?  @map("user_id")
+  eventType  String   @map("event_type")
+  ipAddress  String?  @map("ip_address")
+  userAgent  String?  @map("user_agent")
+  success    Boolean
+  details    Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+  
+  // Relationships (optional - user might be deleted)
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  
+  @@map("security_logs")
+  @@index([userId])
+  @@index([eventType])
+  @@index([createdAt])
+  @@index([ipAddress])
 }
 
 // ============================================================================

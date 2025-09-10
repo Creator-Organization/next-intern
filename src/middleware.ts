@@ -33,6 +33,9 @@ const publicRoutes = [
   '/auth/signup',
   '/auth/error',
   '/auth/recovery',
+  '/auth/forgot-password',      // ADD THIS
+  '/auth/reset-password',       // ADD THIS
+  '/auth/verify-email',         // ADD THIS
   '/search',
   '/categories',
   '/locations',
