@@ -1,6 +1,6 @@
 /**
  * NextAuth.js Configuration
- * NextIntern - Internship Platform
+ * NextIntern v2 - Updated for 28-Table Schema
  */
 
 import NextAuth, { type NextAuthConfig } from 'next-auth'
@@ -42,12 +42,13 @@ export const authConfig: NextAuthConfig = {
         }
 
         try {
-          // Find user by email
+          // Find user by email - Updated includes for new schema
           const user = await db.user.findUnique({
             where: { email: credentials.email as string },
             include: {
-              student: true,
-              company: true
+              candidate: true,
+              industry: true,
+              institute: true
             }
           })
 
@@ -65,15 +66,24 @@ export const authConfig: NextAuthConfig = {
             return null
           }
 
-          // Return user data for session - format for NextAuth v5
+          // Return user data for session - Updated for new schema
+          let displayName = user.email.split('@')[0] // fallback
+
+          if (user.candidate) {
+            displayName = `${user.candidate.firstName} ${user.candidate.lastName}`
+          } else if (user.industry) {
+            displayName = user.industry.companyName
+          } else if (user.institute) {
+            displayName = user.institute.instituteName
+          }
+
           return {
             id: user.id,
             email: user.email,
             userType: user.userType,
             isVerified: user.isVerified,
-            name: user.student 
-              ? `${user.student.firstName} ${user.student.lastName}` 
-              : user.company?.companyName || user.email.split('@')[0]
+            isPremium: user.isPremium,
+            name: displayName
           }
         } catch (error) {
           console.error('Auth error:', error)
@@ -83,7 +93,7 @@ export const authConfig: NextAuthConfig = {
     })
   ],
 
-  // Custom pages
+  // Custom pages - Updated paths for new user types
   pages: {
     signIn: '/auth/signin',
     error: '/auth/error'
@@ -103,6 +113,7 @@ export const authConfig: NextAuthConfig = {
       if (account && user) {
         token.userType = user.userType
         token.isVerified = user.isVerified
+        token.isPremium = user.isPremium || false
         token.userId = user.id
       }
       return token
@@ -114,6 +125,7 @@ export const authConfig: NextAuthConfig = {
         session.user.id = token.userId as string
         session.user.userType = token.userType as UserType
         session.user.isVerified = token.isVerified as boolean
+        session.user.isPremium = (token.isPremium as boolean) || false
       }
       return session
     },
@@ -133,10 +145,19 @@ export const authConfig: NextAuthConfig = {
           }
 
           // Update Google ID if not set
-          if (!existingUser.googleId) {
+          if (!existingUser.googleId && profile?.sub) {
             await db.user.update({
               where: { id: existingUser.id },
-              data: { googleId: profile?.sub }
+              data: { 
+                googleId: profile.sub,
+                lastLoginAt: new Date()
+              }
+            })
+          } else {
+            // Update last login time
+            await db.user.update({
+              where: { id: existingUser.id },
+              data: { lastLoginAt: new Date() }
             })
           }
 
@@ -146,7 +167,36 @@ export const authConfig: NextAuthConfig = {
           return false
         }
       }
+
+      // For credentials login, update last login time
+      if (account?.provider === 'credentials' && user?.id) {
+        try {
+          await db.user.update({
+            where: { id: user.id },
+            data: { lastLoginAt: new Date() }
+          })
+        } catch (error) {
+          console.error('Failed to update last login:', error)
+          // Don't fail login for this
+        }
+      }
+
       return true
+    },
+
+    // Redirect after sign in based on user type
+    async redirect({ url, baseUrl }) {
+      // If url is relative, resolve it
+      if (url.startsWith('/')) {
+        return `${baseUrl}${url}`
+      }
+      // If url is on the same origin, allow it
+      if (new URL(url).origin === baseUrl) {
+        return url
+      }
+      // Default redirect based on user type would need session access
+      // For now, redirect to home
+      return `${baseUrl}/`
     }
   },
 
@@ -154,7 +204,20 @@ export const authConfig: NextAuthConfig = {
   events: {
     async signIn({ user, account }) {
       console.log(`User signed in: ${user.email} via ${account?.provider}`)
+      
+      // Update last login time
+      if (user.id) {
+        try {
+          await db.user.update({
+            where: { id: user.id },
+            data: { lastLoginAt: new Date() }
+          })
+        } catch (error) {
+          console.error('Failed to update last login time:', error)
+        }
+      }
     },
+    
     async signOut() {
       console.log('User signed out')
     }

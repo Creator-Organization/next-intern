@@ -1,5 +1,5 @@
 // src/lib/email.ts
-// Email Integration with Resend - Phase 2 Day 5
+// Updated for 28-Table Schema
 
 import { Resend } from 'resend'
 
@@ -12,7 +12,7 @@ const EMAIL_CONFIG = {
     baseUrl: process.env.NEXTAUTH_URL || 'http://localhost:3000'
 } as const
 
-// Email templates
+// Email templates - Updated for new user types
 const EMAIL_TEMPLATES = {
     passwordReset: {
         subject: 'Reset Your NextIntern Password',
@@ -27,7 +27,7 @@ const EMAIL_TEMPLATES = {
       <body style="font-family: Inter, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
         <div style="text-align: center; margin-bottom: 30px;">
           <h1 style="color: #0891b2; margin: 0; font-size: 28px; font-weight: 700;">NextIntern</h1>
-          <p style="color: #64748b; margin: 5px 0 0 0;">Your Gateway to Amazing Internships</p>
+          <p style="color: #64748b; margin: 5px 0 0 0;">Your Gateway to Amazing Opportunities</p>
         </div>
         
         <div style="background: #f8fafc; padding: 30px; border-radius: 12px; border-left: 4px solid #0891b2;">
@@ -81,7 +81,7 @@ const EMAIL_TEMPLATES = {
       <body style="font-family: Inter, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
         <div style="text-align: center; margin-bottom: 30px;">
           <h1 style="color: #0891b2; margin: 0; font-size: 28px; font-weight: 700;">NextIntern</h1>
-          <p style="color: #64748b; margin: 5px 0 0 0;">Your Gateway to Amazing Internships</p>
+          <p style="color: #64748b; margin: 5px 0 0 0;">Your Gateway to Amazing Opportunities</p>
         </div>
         
         <div style="background: #f0f9ff; padding: 30px; border-radius: 12px; border-left: 4px solid #0891b2;">
@@ -92,7 +92,7 @@ const EMAIL_TEMPLATES = {
           </p>
           
           <p style="margin: 0 0 20px 0; color: #475569;">
-            Thank you for joining NextIntern! To complete your registration and start exploring amazing internship opportunities, please verify your email address.
+            Thank you for joining NextIntern! To complete your registration and start exploring amazing opportunities, please verify your email address.
           </p>
           
           <div style="text-align: center; margin: 30px 0;">
@@ -116,7 +116,7 @@ const EMAIL_TEMPLATES = {
           <h3 style="color: #92400e; margin: 0 0 10px 0; font-size: 16px;">What's Next?</h3>
           <ul style="color: #92400e; margin: 0; padding-left: 20px;">
             <li>Complete your profile</li>
-            <li>Browse thousands of internships</li>
+            <li>Browse thousands of opportunities</li>
             <li>Connect with top companies</li>
             <li>Start your career journey</li>
           </ul>
@@ -134,7 +134,7 @@ const EMAIL_TEMPLATES = {
 
     welcomeEmail: {
         subject: 'Welcome to NextIntern - Your Journey Starts Now!',
-        getHtml: (userName: string, userType: 'student' | 'company') => `
+        getHtml: (userName: string, userType: 'candidate' | 'industry' | 'institute') => `
       <!DOCTYPE html>
       <html>
       <head>
@@ -145,40 +145,53 @@ const EMAIL_TEMPLATES = {
       <body style="font-family: Inter, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
         <div style="text-align: center; margin-bottom: 30px;">
           <h1 style="color: #0891b2; margin: 0; font-size: 28px; font-weight: 700;">NextIntern</h1>
-          <p style="color: #64748b; margin: 5px 0 0 0;">Your Gateway to Amazing Internships</p>
+          <p style="color: #64748b; margin: 5px 0 0 0;">Your Gateway to Amazing Opportunities</p>
         </div>
         
         <div style="background: linear-gradient(135deg, #0891b2 0%, #06b6d4 100%); color: white; padding: 30px; border-radius: 12px; text-align: center; margin-bottom: 30px;">
-          <h2 style="margin: 0 0 15px 0; font-size: 26px;">🎉 Welcome to NextIntern!</h2>
+          <h2 style="margin: 0 0 15px 0; font-size: 26px;">Welcome to NextIntern!</h2>
           <p style="margin: 0; font-size: 18px; opacity: 0.9;">
             Hello ${userName}, your email has been verified successfully!
           </p>
         </div>
         
-        ${userType === 'student' ? `
+        ${userType === 'candidate' ? `
         <div style="background: #f8fafc; padding: 25px; border-radius: 10px; margin-bottom: 20px;">
-          <h3 style="color: #334155; margin: 0 0 15px 0;">🚀 Ready to Launch Your Career?</h3>
+          <h3 style="color: #334155; margin: 0 0 15px 0;">Ready to Launch Your Career?</h3>
           <p style="color: #475569; margin: 0 0 15px 0;">
-            As a student on NextIntern, you now have access to thousands of internship opportunities from top companies.
+            As a candidate on NextIntern, you now have access to thousands of opportunities from top companies.
           </p>
           <ul style="color: #475569; margin: 0; padding-left: 20px;">
-            <li>Browse internships by location, skills, and stipend</li>
+            <li>Browse opportunities by location, skills, and stipend</li>
             <li>Apply with one-click using your profile</li>
             <li>Track your applications in real-time</li>
             <li>Get direct messages from recruiters</li>
           </ul>
         </div>
-        ` : `
+        ` : userType === 'industry' ? `
         <div style="background: #f8fafc; padding: 25px; border-radius: 10px; margin-bottom: 20px;">
-          <h3 style="color: #334155; margin: 0 0 15px 0;">🏢 Find Your Next Great Intern</h3>
+          <h3 style="color: #334155; margin: 0 0 15px 0;">Find Your Next Great Talent</h3>
           <p style="color: #475569; margin: 0 0 15px 0;">
-            As a company on NextIntern, you can now connect with talented students from top universities.
+            As a company on NextIntern, you can now connect with talented candidates from top universities.
           </p>
           <ul style="color: #475569; margin: 0; padding-left: 20px;">
-            <li>Post internship openings in minutes</li>
+            <li>Post opportunities in minutes</li>
             <li>Review applications with smart filtering</li>
             <li>Schedule interviews seamlessly</li>
             <li>Access a pool of pre-screened candidates</li>
+          </ul>
+        </div>
+        ` : `
+        <div style="background: #f8fafc; padding: 25px; border-radius: 10px; margin-bottom: 20px;">
+          <h3 style="color: #334155; margin: 0 0 15px 0;">Manage Your Student Community</h3>
+          <p style="color: #475569; margin: 0 0 15px 0;">
+            As an educational institute on NextIntern, you can support your students' career development.
+          </p>
+          <ul style="color: #475569; margin: 0; padding-left: 20px;">
+            <li>Track student placement progress</li>
+            <li>Partner with top companies</li>
+            <li>Manage student portfolios</li>
+            <li>Generate placement reports</li>
           </ul>
         </div>
         `}
@@ -186,7 +199,9 @@ const EMAIL_TEMPLATES = {
         <div style="text-align: center; margin: 30px 0;">
           <a href="${EMAIL_CONFIG.baseUrl}/${userType}" 
              style="background: #0891b2; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block; font-size: 16px;">
-            ${userType === 'student' ? 'Explore Internships' : 'Post Your First Internship'}
+            ${userType === 'candidate' ? 'Explore Opportunities' : 
+              userType === 'industry' ? 'Post Your First Opportunity' : 
+              'Manage Students'}
           </a>
         </div>
         
@@ -263,11 +278,11 @@ export async function sendEmailVerificationEmail(
     }
 }
 
-// Send welcome email after verification
+// Send welcome email after verification - Updated for new user types
 export async function sendWelcomeEmail(
     email: string,
     userName: string,
-    userType: 'student' | 'company'
+    userType: 'candidate' | 'industry' | 'institute'
 ): Promise<{ success: boolean; error?: string }> {
     try {
         const { data, error } = await resend.emails.send({
@@ -315,8 +330,6 @@ export const EmailUtils = {
                 html: '<p>This is a test email to verify configuration.</p>'
             })
 
-            // Even if the email fails to send to test@example.com, 
-            // if we get a response, the configuration is working
             return true
         } catch (error) {
             console.error('Email configuration test failed:', error)
