@@ -1,6 +1,6 @@
 /**
- * Register Form Component (Updated)
- * NextIntern - Authentication System
+ * Register Form Component (Updated for 28-Table Schema)
+ * NextIntern v2 - Authentication System
  */
 
 'use client'
@@ -19,7 +19,7 @@ interface RegisterFormProps {
   onSwitchToLogin?: () => void
 }
 
-interface StudentFormData {
+interface CandidateFormData {
   email: string
   password: string
   confirmPassword: string
@@ -28,7 +28,7 @@ interface StudentFormData {
   college?: string
 }
 
-interface CompanyFormData {
+interface IndustryFormData {
   email: string
   password: string
   confirmPassword: string
@@ -36,15 +36,31 @@ interface CompanyFormData {
   industry?: string
 }
 
-type RegisterFormData = StudentFormData | CompanyFormData
+interface InstituteFormData {
+  email: string
+  password: string
+  confirmPassword: string
+  instituteName: string
+  instituteType?: string
+  affiliatedUniversity?: string
+}
+
+type RegisterFormData = CandidateFormData | IndustryFormData | InstituteFormData
 
 export function RegisterForm({ userType, onSwitchToLogin }: RegisterFormProps) {
   const router = useRouter()
-  const [formData, setFormData] = useState<RegisterFormData>(
-    userType === UserType.STUDENT 
-      ? { email: '', password: '', confirmPassword: '', firstName: '', lastName: '', college: '' }
-      : { email: '', password: '', confirmPassword: '', companyName: '', industry: '' }
-  )
+  const [formData, setFormData] = useState<RegisterFormData>(() => {
+    switch (userType) {
+      case UserType.CANDIDATE:
+        return { email: '', password: '', confirmPassword: '', firstName: '', lastName: '', college: '' }
+      case UserType.INDUSTRY:
+        return { email: '', password: '', confirmPassword: '', companyName: '', industry: '' }
+      case UserType.INSTITUTE:
+        return { email: '', password: '', confirmPassword: '', instituteName: '', instituteType: '', affiliatedUniversity: '' }
+      default:
+        return { email: '', password: '', confirmPassword: '', firstName: '', lastName: '', college: '' }
+    }
+  })
   
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -108,22 +124,41 @@ export function RegisterForm({ userType, onSwitchToLogin }: RegisterFormProps) {
     }
 
     try {
+      // Prepare form data based on user type
+      let requestData: any = {
+        email: formData.email,
+        password: formData.password,
+        userType
+      }
+
+      if (userType === UserType.CANDIDATE) {
+        const data = formData as CandidateFormData
+        requestData = {
+          ...requestData,
+          firstName: data.firstName,
+          lastName: data.lastName
+        }
+      } else if (userType === UserType.INDUSTRY) {
+        const data = formData as IndustryFormData
+        requestData = {
+          ...requestData,
+          companyName: data.companyName,
+          industry: data.industry
+        }
+      } else if (userType === UserType.INSTITUTE) {
+        const data = formData as InstituteFormData
+        requestData = {
+          ...requestData,
+          instituteName: data.instituteName,
+          instituteType: data.instituteType
+        }
+      }
+
       // Call registration API
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password,
-          userType,
-          ...(userType === UserType.STUDENT ? {
-            firstName: (formData as StudentFormData).firstName,
-            lastName: (formData as StudentFormData).lastName
-          } : {
-            companyName: (formData as CompanyFormData).companyName,
-            industry: (formData as CompanyFormData).industry
-          })
-        })
+        body: JSON.stringify(requestData)
       })
 
       const data = await response.json()
@@ -137,7 +172,22 @@ export function RegisterForm({ userType, onSwitchToLogin }: RegisterFormProps) {
         })
 
         if (signInResult?.ok) {
-          const dashboardUrl = userType === UserType.STUDENT ? '/student' : '/company'
+          // Get dashboard URL based on user type
+          let dashboardUrl = '/'
+          switch (userType) {
+            case UserType.CANDIDATE:
+              dashboardUrl = '/candidate'
+              break
+            case UserType.INDUSTRY:
+              dashboardUrl = '/industry'
+              break
+            case UserType.INSTITUTE:
+              dashboardUrl = '/institute'
+              break
+            case UserType.ADMIN:
+              dashboardUrl = '/admin'
+              break
+          }
           router.push(dashboardUrl)
         } else {
           // Registration succeeded but auto-login failed, redirect to login
@@ -156,9 +206,23 @@ export function RegisterForm({ userType, onSwitchToLogin }: RegisterFormProps) {
   const handleGoogleSignIn = async () => {
     setIsLoading(true)
     try {
-      await signIn('google', {
-        callbackUrl: userType === UserType.STUDENT ? '/student' : '/company'
-      })
+      let callbackUrl = '/'
+      switch (userType) {
+        case UserType.CANDIDATE:
+          callbackUrl = '/candidate'
+          break
+        case UserType.INDUSTRY:
+          callbackUrl = '/industry'
+          break
+        case UserType.INSTITUTE:
+          callbackUrl = '/institute'
+          break
+        case UserType.ADMIN:
+          callbackUrl = '/admin'
+          break
+      }
+      
+      await signIn('google', { callbackUrl })
     } catch {
       setError('Google sign-in failed')
       setIsLoading(false)
@@ -176,15 +240,40 @@ export function RegisterForm({ userType, onSwitchToLogin }: RegisterFormProps) {
     }
   }
 
-  const isFormValid = 
-    formData.email && 
-    formData.password && 
-    passwordsMatch && 
-    emailAvailable &&
-    (userType === UserType.STUDENT 
-      ? (formData as StudentFormData).firstName && (formData as StudentFormData).lastName
-      : (formData as CompanyFormData).companyName
-    )
+  // Form validation based on user type
+  const isFormValid = () => {
+    const baseValid = formData.email && formData.password && passwordsMatch && emailAvailable
+
+    if (!baseValid) return false
+
+    switch (userType) {
+      case UserType.CANDIDATE:
+        const candidateData = formData as CandidateFormData
+        return candidateData.firstName && candidateData.lastName
+      case UserType.INDUSTRY:
+        const industryData = formData as IndustryFormData
+        return industryData.companyName
+      case UserType.INSTITUTE:
+        const instituteData = formData as InstituteFormData
+        return instituteData.instituteName
+      default:
+        return true
+    }
+  }
+
+  // Get user type display name
+  const getUserTypeLabel = () => {
+    switch (userType) {
+      case UserType.CANDIDATE:
+        return 'Candidate'
+      case UserType.INDUSTRY:
+        return 'Company'
+      case UserType.INSTITUTE:
+        return 'Institute'
+      default:
+        return 'User'
+    }
+  }
 
   return (
     <Card className="w-full max-w-md">
@@ -193,7 +282,7 @@ export function RegisterForm({ userType, onSwitchToLogin }: RegisterFormProps) {
           Create Account
         </CardTitle>
         <p className="text-gray-600">
-          Join as a {userType === UserType.STUDENT ? 'Student' : 'Company'}
+          Join as a {getUserTypeLabel()}
         </p>
       </CardHeader>
       
@@ -205,13 +294,13 @@ export function RegisterForm({ userType, onSwitchToLogin }: RegisterFormProps) {
         )}
         
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Student-specific fields */}
-          {userType === UserType.STUDENT && (
+          {/* Candidate-specific fields */}
+          {userType === UserType.CANDIDATE && (
             <div className="grid grid-cols-2 gap-3">
               <Input
                 label="First Name"
                 placeholder="John"
-                value={(formData as StudentFormData).firstName}
+                value={(formData as CandidateFormData).firstName}
                 onChange={(e) => handleInputChange('firstName', e.target.value)}
                 required
                 disabled={isLoading}
@@ -219,7 +308,7 @@ export function RegisterForm({ userType, onSwitchToLogin }: RegisterFormProps) {
               <Input
                 label="Last Name"
                 placeholder="Doe"
-                value={(formData as StudentFormData).lastName}
+                value={(formData as CandidateFormData).lastName}
                 onChange={(e) => handleInputChange('lastName', e.target.value)}
                 required
                 disabled={isLoading}
@@ -227,13 +316,13 @@ export function RegisterForm({ userType, onSwitchToLogin }: RegisterFormProps) {
             </div>
           )}
 
-          {/* Company-specific fields */}
-          {userType === UserType.COMPANY && (
+          {/* Industry-specific fields */}
+          {userType === UserType.INDUSTRY && (
             <>
               <Input
                 label="Company Name"
                 placeholder="Your Company Name"
-                value={(formData as CompanyFormData).companyName}
+                value={(formData as IndustryFormData).companyName}
                 onChange={(e) => handleInputChange('companyName', e.target.value)}
                 required
                 disabled={isLoading}
@@ -241,8 +330,36 @@ export function RegisterForm({ userType, onSwitchToLogin }: RegisterFormProps) {
               <Input
                 label="Industry (Optional)"
                 placeholder="Technology, Healthcare, Finance..."
-                value={(formData as CompanyFormData).industry || ''}
+                value={(formData as IndustryFormData).industry || ''}
                 onChange={(e) => handleInputChange('industry', e.target.value)}
+                disabled={isLoading}
+              />
+            </>
+          )}
+
+          {/* Institute-specific fields */}
+          {userType === UserType.INSTITUTE && (
+            <>
+              <Input
+                label="Institute Name"
+                placeholder="Your Institution Name"
+                value={(formData as InstituteFormData).instituteName}
+                onChange={(e) => handleInputChange('instituteName', e.target.value)}
+                required
+                disabled={isLoading}
+              />
+              <Input
+                label="Institute Type (Optional)"
+                placeholder="University, College, Technical Institute..."
+                value={(formData as InstituteFormData).instituteType || ''}
+                onChange={(e) => handleInputChange('instituteType', e.target.value)}
+                disabled={isLoading}
+              />
+              <Input
+                label="Affiliated University (Optional)"
+                placeholder="Parent University if applicable"
+                value={(formData as InstituteFormData).affiliatedUniversity || ''}
+                onChange={(e) => handleInputChange('affiliatedUniversity', e.target.value)}
                 disabled={isLoading}
               />
             </>
@@ -341,7 +458,7 @@ export function RegisterForm({ userType, onSwitchToLogin }: RegisterFormProps) {
           <Button
             type="submit"
             className="w-full bg-primary hover:bg-primary-hover"
-            disabled={isLoading || !isFormValid}
+            disabled={isLoading || !isFormValid()}
           >
             {isLoading ? (
               <>

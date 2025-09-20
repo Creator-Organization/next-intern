@@ -10,6 +10,7 @@ import {
   Bell, 
   User, 
   Building, 
+  School,
   ChevronDown, 
   LogOut, 
   Settings, 
@@ -17,16 +18,18 @@ import {
   Heart, 
   FileText,
   HelpCircle,
-  Phone
+  Phone,
+  Shield
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface User {
   id: string;
   email: string;
-  userType: 'STUDENT' | 'COMPANY' | 'ADMIN';
-  student?: { firstName: string; lastName: string; };
-  company?: { companyName: string; };
+  userType: 'CANDIDATE' | 'INDUSTRY' | 'INSTITUTE' | 'ADMIN';
+  candidate?: { firstName: string; lastName: string; };
+  industry?: { companyName: string; };
+  institute?: { instituteName: string; };
 }
 
 interface HeaderProps {
@@ -57,31 +60,52 @@ export function Header({ user }: HeaderProps) {
     if (!user) {
       return [
         { href: '/', label: 'Home', active: pathname === '/' },
-        { href: '/internships', label: 'Browse Internships', active: pathname === '/internships' },
-        { href: '/companies', label: 'Companies', active: pathname === '/companies' },
+        { href: '/opportunities', label: 'Browse Opportunities', active: pathname === '/opportunities' },
+        { href: '/industries', label: 'Companies', active: pathname === '/industries' },
+        { href: '/institutes', label: 'Institutes', active: pathname === '/institutes' },
         { href: '/about', label: 'About', active: pathname === '/about' },
         { href: '/pricing', label: 'Pricing', active: pathname === '/pricing' },
         { href: '/contact', label: 'Contact', active: pathname === '/contact' }
       ];
     }
 
-    if (user.userType === 'STUDENT') {
+    if (user.userType === 'CANDIDATE') {
       return [
-        { href: '/student', label: 'Dashboard', active: pathname === '/student' },
-        { href: '/student/browse', label: 'Browse Internships', active: pathname.startsWith('/student/browse') },
-        { href: '/student/applications', label: 'My Applications', active: pathname.startsWith('/student/applications') },
-        { href: '/student/saved', label: 'Saved', active: pathname.startsWith('/student/saved') },
-        { href: '/student/messages', label: 'Messages', active: pathname.startsWith('/student/messages') }
+        { href: '/candidate', label: 'Dashboard', active: pathname === '/candidate' },
+        { href: '/candidate/browse', label: 'Browse Opportunities', active: pathname.startsWith('/candidate/browse') },
+        { href: '/candidate/applications', label: 'My Applications', active: pathname.startsWith('/candidate/applications') },
+        { href: '/candidate/saved', label: 'Saved', active: pathname.startsWith('/candidate/saved') },
+        { href: '/candidate/messages', label: 'Messages', active: pathname.startsWith('/candidate/messages') }
       ];
     }
 
-    if (user.userType === 'COMPANY') {
+    if (user.userType === 'INDUSTRY') {
       return [
-        { href: '/company', label: 'Dashboard', active: pathname === '/company' },
-        { href: '/company/post', label: 'Post Internship', active: pathname === '/company/post' },
-        { href: '/company/internships', label: 'Manage Internships', active: pathname.startsWith('/company/internships') },
-        { href: '/company/applications', label: 'Applications', active: pathname.startsWith('/company/applications') },
-        { href: '/company/messages', label: 'Messages', active: pathname.startsWith('/company/messages') }
+        { href: '/industry', label: 'Dashboard', active: pathname === '/industry' },
+        { href: '/industry/post', label: 'Post Opportunity', active: pathname === '/industry/post' },
+        { href: '/industry/opportunities', label: 'Manage Opportunities', active: pathname.startsWith('/industry/opportunities') },
+        { href: '/industry/applications', label: 'Applications', active: pathname.startsWith('/industry/applications') },
+        { href: '/industry/messages', label: 'Messages', active: pathname.startsWith('/industry/messages') }
+      ];
+    }
+
+    if (user.userType === 'INSTITUTE') {
+      return [
+        { href: '/institute', label: 'Dashboard', active: pathname === '/institute' },
+        { href: '/institute/students', label: 'Students', active: pathname.startsWith('/institute/students') },
+        { href: '/institute/programs', label: 'Programs', active: pathname.startsWith('/institute/programs') },
+        { href: '/institute/reports', label: 'Reports', active: pathname.startsWith('/institute/reports') },
+        { href: '/institute/messages', label: 'Messages', active: pathname.startsWith('/institute/messages') }
+      ];
+    }
+
+    if (user.userType === 'ADMIN') {
+      return [
+        { href: '/admin', label: 'Dashboard', active: pathname === '/admin' },
+        { href: '/admin/users', label: 'Users', active: pathname.startsWith('/admin/users') },
+        { href: '/admin/opportunities', label: 'Opportunities', active: pathname.startsWith('/admin/opportunities') },
+        { href: '/admin/analytics', label: 'Analytics', active: pathname.startsWith('/admin/analytics') },
+        { href: '/admin/settings', label: 'Settings', active: pathname.startsWith('/admin/settings') }
       ];
     }
 
@@ -93,11 +117,14 @@ export function Header({ user }: HeaderProps) {
   // User display name
   const getUserDisplayName = () => {
     if (!user) return '';
-    if (user.student) {
-      return `${user.student.firstName} ${user.student.lastName}`;
+    if (user.candidate) {
+      return `${user.candidate.firstName} ${user.candidate.lastName}`;
     }
-    if (user.company) {
-      return user.company.companyName;
+    if (user.industry) {
+      return user.industry.companyName;
+    }
+    if (user.institute) {
+      return user.institute.instituteName;
     }
     return user.email;
   };
@@ -106,33 +133,93 @@ export function Header({ user }: HeaderProps) {
   const getProfileDropdownItems = () => {
     if (!user) return [];
 
+    const profilePath = {
+      'CANDIDATE': '/candidate/profile',
+      'INDUSTRY': '/industry/profile',
+      'INSTITUTE': '/institute/profile',
+      'ADMIN': '/admin/profile'
+    }[user.userType];
+
+    const settingsPath = {
+      'CANDIDATE': '/candidate/settings',
+      'INDUSTRY': '/industry/settings',
+      'INSTITUTE': '/institute/settings',
+      'ADMIN': '/admin/settings'
+    }[user.userType];
+
     const baseItems = [
       { 
-        href: user.userType === 'STUDENT' ? '/student/profile' : '/company/profile', 
+        href: profilePath, 
         label: 'Profile', 
         icon: User 
       },
       { 
-        href: user.userType === 'STUDENT' ? '/student/settings' : '/company/settings', 
+        href: settingsPath, 
         label: 'Settings', 
         icon: Settings 
       }
     ];
 
-    if (user.userType === 'STUDENT') {
+    // Add user type specific items
+    if (user.userType === 'CANDIDATE') {
       baseItems.unshift(
-        { href: '/student/certificates', label: 'Certificates', icon: FileText }
+        { href: '/candidate/certificates', label: 'Certificates', icon: FileText }
       );
     }
 
-    if (user.userType === 'COMPANY') {
+    if (user.userType === 'INDUSTRY') {
       baseItems.unshift(
-        { href: '/company/billing', label: 'Billing', icon: Briefcase },
-        { href: '/company/reports', label: 'Reports', icon: FileText }
+        { href: '/industry/billing', label: 'Billing', icon: Briefcase },
+        { href: '/industry/reports', label: 'Reports', icon: FileText }
+      );
+    }
+
+    if (user.userType === 'INSTITUTE') {
+      baseItems.unshift(
+        { href: '/institute/billing', label: 'Subscription', icon: Briefcase },
+        { href: '/institute/analytics', label: 'Analytics', icon: FileText }
+      );
+    }
+
+    if (user.userType === 'ADMIN') {
+      baseItems.unshift(
+        { href: '/admin/system', label: 'System Health', icon: Shield }
       );
     }
 
     return baseItems;
+  };
+
+  // Get dashboard URL based on user type
+  const getDashboardUrl = () => {
+    if (!user) return '/';
+    const dashboardMap = {
+      'CANDIDATE': '/candidate',
+      'INDUSTRY': '/industry',
+      'INSTITUTE': '/institute',
+      'ADMIN': '/admin'
+    };
+    return dashboardMap[user.userType] || '/';
+  };
+
+  // Get user type display label
+  const getUserTypeLabel = () => {
+    const labelMap = {
+      'CANDIDATE': 'Candidate',
+      'INDUSTRY': 'Company',
+      'INSTITUTE': 'Institute',
+      'ADMIN': 'Admin'
+    };
+    return user ? labelMap[user.userType] || 'User' : '';
+  };
+
+  // Get user avatar letter
+  const getUserAvatarLetter = () => {
+    if (!user) return 'U';
+    if (user.candidate) return user.candidate.firstName[0];
+    if (user.industry) return user.industry.companyName[0];
+    if (user.institute) return user.institute.instituteName[0];
+    return user.email[0].toUpperCase();
   };
 
   return (
@@ -148,7 +235,7 @@ export function Header({ user }: HeaderProps) {
           
           {/* Logo */}
           <div className="flex items-center">
-            <Link href={user ? (user.userType === 'STUDENT' ? '/student' : '/company') : '/'} 
+            <Link href={getDashboardUrl()} 
                   className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">N</span>
@@ -205,15 +292,15 @@ export function Header({ user }: HeaderProps) {
                   >
                     <div className="w-8 h-8 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center">
                       <span className="text-white text-sm font-medium">
-                        {user.student ? user.student.firstName[0] : user.company ? user.company.companyName[0] : 'U'}
+                        {getUserAvatarLetter()}
                       </span>
                     </div>
                     <div className="hidden sm:block text-left">
                       <div className="text-sm font-medium text-gray-900 truncate max-w-[120px]">
                         {getUserDisplayName()}
                       </div>
-                      <div className="text-xs text-gray-500 capitalize">
-                        {user.userType.toLowerCase()}
+                      <div className="text-xs text-gray-500">
+                        {getUserTypeLabel()}
                       </div>
                     </div>
                     <ChevronDown className="w-4 h-4 text-gray-400" />
@@ -274,12 +361,12 @@ export function Header({ user }: HeaderProps) {
                     Help
                   </Button>
                 </Link>
-                <Link href="/auth/student">
+                <Link href="/auth/signin">
                   <Button variant="secondary" size="sm" className="hover:border-primary-200 hover:bg-primary-50">
                     Sign In
                   </Button>
                 </Link>
-                <Link href="/auth/student">
+                <Link href="/auth/signup">
                   <Button size="sm" className="bg-primary-600 hover:bg-primary-700">
                     Get Started
                   </Button>
@@ -317,12 +404,12 @@ export function Header({ user }: HeaderProps) {
             {/* Mobile Auth Buttons */}
             {!user && (
               <div className="pt-4 border-t border-gray-200 space-y-2">
-                <Link href="/auth/student" className="block">
+                <Link href="/auth/signin" className="block">
                   <Button variant="secondary" className="w-full">
                     Sign In
                   </Button>
                 </Link>
-                <Link href="/auth/student" className="block">
+                <Link href="/auth/signup" className="block">
                   <Button className="w-full bg-primary-600 hover:bg-primary-700">
                     Get Started
                   </Button>

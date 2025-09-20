@@ -1,8 +1,7 @@
 /**
  * Database Connection Utilities
- * NextIntern - Internship Platform
+ * NextIntern - Updated for 28-Table Schema
  */
-
 import { PrismaClient } from '@prisma/client'
 
 // Global Prisma Client Instance
@@ -63,15 +62,16 @@ export async function getDatabaseHealth() {
   }
 }
 
-// Common Database Operations
+// Common Database Operations - Updated for 28-Table Schema
 export const dbOperations = {
-  // User Operations
+  // User Operations - Updated for new schema
   async getUserByEmail(email: string) {
     return db.user.findUnique({
       where: { email },
       include: {
-        student: true,
-        company: true,
+        candidate: true,    // Updated from student
+        industry: true,     // Updated from company
+        institute: true,    // Added institute
         preferences: true
       }
     })
@@ -81,25 +81,28 @@ export const dbOperations = {
     return db.user.findUnique({
       where: { id },
       include: {
-        student: true,
-        company: true,
+        candidate: true,    // Updated from student
+        industry: true,     // Updated from company
+        institute: true,    // Added institute
         preferences: true
       }
     })
   },
 
-  // Internship Operations
-  async getActiveInternships(take: number = 10, skip: number = 0) {
-    return db.internship.findMany({
+  // Opportunity Operations - Updated from internship
+  async getActiveOpportunities(take: number = 10, skip: number = 0) {
+    return db.opportunity.findMany({
       where: { isActive: true },
       include: {
-        company: {
+        industry: {         // Updated from company
           select: {
             companyName: true,
             logoUrl: true,
             city: true,
             state: true,
-            isVerified: true
+            isVerified: true,
+            showCompanyName: true,
+            anonymousId: true
           }
         },
         category: true,
@@ -118,31 +121,135 @@ export const dbOperations = {
     })
   },
 
-  // Statistics
+  // Statistics - Updated for new schema
   async getPlatformStats() {
     const [
       totalUsers,
-      totalStudents,
-      totalCompanies,
-      totalInternships,
+      totalCandidates,      // Updated from totalStudents
+      totalIndustries,      // Updated from totalCompanies
+      totalInstitutes,      // Added
+      totalOpportunities,   // Updated from totalInternships
       totalApplications,
-      activeInternships
+      activeOpportunities   // Updated from activeInternships
     ] = await Promise.all([
       db.user.count(),
-      db.student.count(),
-      db.company.count(),
-      db.internship.count(),
+      db.candidate.count(),         // Updated from student
+      db.industry.count(),          // Updated from company
+      db.institute.count(),         // Added
+      db.opportunity.count(),       // Updated from internship
       db.application.count(),
-      db.internship.count({ where: { isActive: true } })
+      db.opportunity.count({ where: { isActive: true } })
     ])
 
     return {
       totalUsers,
-      totalStudents,
-      totalCompanies,
-      totalInternships,
+      totalCandidates,
+      totalIndustries,
+      totalInstitutes,
+      totalOpportunities,
       totalApplications,
-      activeInternships
+      activeOpportunities
+    }
+  },
+
+  // New helper methods for 28-table schema features
+  async getVerifiedIndustries() {
+    return db.industry.count({ where: { isVerified: true } })
+  },
+
+  async getPremiumUsers() {
+    return db.user.count({ where: { isPremium: true } })
+  },
+
+  async getCompanyPostingStats(industryId: string) {
+    const industry = await db.industry.findUnique({
+      where: { id: industryId },
+      select: {
+        monthlyPostLimit: true,
+        currentMonthPosts: true,
+        lastPostLimitReset: true
+      }
+    })
+
+    if (!industry) return null
+
+    const now = new Date()
+    const shouldReset = industry.lastPostLimitReset.getMonth() !== now.getMonth() || 
+                       industry.lastPostLimitReset.getFullYear() !== now.getFullYear()
+
+    return {
+      ...industry,
+      shouldReset,
+      canPost: industry.currentMonthPosts < industry.monthlyPostLimit
+    }
+  },
+
+  // Privacy-aware queries
+  async getCandidateProfile(candidateId: string, viewerType: 'CANDIDATE' | 'INDUSTRY' | 'INSTITUTE' | 'ADMIN') {
+    const candidate = await db.candidate.findUnique({
+      where: { id: candidateId },
+      include: {
+        user: {
+          select: {
+            email: true,
+            isVerified: true,
+            isPremium: true
+          }
+        },
+        skills: true,
+        certificates: true
+      }
+    })
+
+    if (!candidate) return null
+
+    // Apply privacy rules based on viewer type and candidate settings
+    const canViewFullName = candidate.showFullName || viewerType === 'ADMIN'
+    const canViewContact = candidate.showContact || viewerType === 'ADMIN'
+
+    return {
+      ...candidate,
+      // Apply privacy filters
+      firstName: canViewFullName ? candidate.firstName : 'Anonymous',
+      lastName: canViewFullName ? candidate.lastName : 'Candidate',
+      phone: canViewContact ? candidate.phone : null,
+      user: {
+        ...candidate.user,
+        email: canViewContact ? candidate.user.email : null
+      }
+    }
+  },
+
+  async getIndustryProfile(industryId: string) {
+    const industry = await db.industry.findUnique({
+      where: { id: industryId },
+      include: {
+        user: {
+          select: {
+            email: true,
+            isVerified: true,
+            isPremium: true
+          }
+        },
+        opportunities: {
+          where: { isActive: true },
+          take: 5,
+          orderBy: { createdAt: 'desc' }
+        }
+      }
+    })
+
+    if (!industry) return null
+
+    // Apply privacy rules
+    return {
+      ...industry,
+      companyName: industry.showCompanyName 
+        ? industry.companyName 
+        : `Company #${industry.anonymousId.slice(-6)}`,
+      // Hide sensitive fields for non-premium viewers
+      email: industry.user.isPremium ? industry.email : null,
+      phone: industry.user.isPremium ? industry.phone : null
     }
   }
 }

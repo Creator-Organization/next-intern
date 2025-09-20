@@ -1,6 +1,6 @@
 /**
  * Sign Up Page
- * NextIntern - Authentication System
+ * NextIntern v2 - Updated for 28-Table Schema
  */
 
 'use client'
@@ -19,10 +19,21 @@ export default function SignUpPage() {
   const [showTypeSelector, setShowTypeSelector] = useState(true)
 
   useEffect(() => {
-    // Check if user type is passed as URL parameter
+    // Check if user type is passed as URL parameter - Updated for new user types
     const userTypeParam = searchParams.get('type')
-    if (userTypeParam === 'student' || userTypeParam === 'company') {
-      setSelectedUserType(userTypeParam === 'student' ? UserType.STUDENT : UserType.COMPANY)
+    
+    // Map URL params to new user types
+    const userTypeMap: { [key: string]: UserType } = {
+      'candidate': UserType.CANDIDATE,
+      'student': UserType.CANDIDATE,     // Legacy support
+      'industry': UserType.INDUSTRY,
+      'company': UserType.INDUSTRY,      // Legacy support
+      'institute': UserType.INSTITUTE,
+      'admin': UserType.ADMIN
+    }
+
+    if (userTypeParam && userTypeMap[userTypeParam]) {
+      setSelectedUserType(userTypeMap[userTypeParam])
       setShowTypeSelector(false)
     }
   }, [searchParams])
@@ -38,20 +49,42 @@ export default function SignUpPage() {
   }
 
   const handleSwitchToLogin = () => {
-    const currentType = selectedUserType === UserType.STUDENT ? 'student' : 'company'
-    window.location.href = `/auth/signin?type=${currentType}`
+    // Map user types to URL params for login
+    const typeParam = {
+      [UserType.CANDIDATE]: 'candidate',
+      [UserType.INDUSTRY]: 'industry',
+      [UserType.INSTITUTE]: 'institute',
+      [UserType.ADMIN]: 'admin'
+    }[selectedUserType!] || 'candidate'
+
+    window.location.href = `/auth/signin?type=${typeParam}`
+  }
+
+  // Get user type display name
+  const getUserTypeDisplayName = () => {
+    if (!selectedUserType) return ''
+    
+    const displayNames = {
+      [UserType.CANDIDATE]: 'Candidate',
+      [UserType.INDUSTRY]: 'Company',
+      [UserType.INSTITUTE]: 'Institute',
+      [UserType.ADMIN]: 'Admin'
+    }
+    
+    return displayNames[selectedUserType]
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6">
+        
         {/* Header */}
         <div className="text-center">
           <h1 className="text-3xl font-bold text-gray-900 font-manrope mb-2">
             NextIntern
           </h1>
           <p className="text-gray-600">
-            Create your account
+            {showTypeSelector ? 'Create your account' : `Join as ${getUserTypeDisplayName()}`}
           </p>
         </div>
 

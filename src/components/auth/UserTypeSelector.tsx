@@ -1,13 +1,13 @@
 /**
  * User Type Selector Component
- * NextIntern - Authentication System
+ * NextIntern v2 - Updated for 28-Table Schema
  */
 
 'use client'
 
 import { UserType } from '@prisma/client'
 import { Card, CardContent } from '@/components/ui/card'
-import { GraduationCap, Building2 } from 'lucide-react'
+import { GraduationCap, Building2, School } from 'lucide-react'
 
 interface UserTypeSelectorProps {
   selectedType: UserType | null
@@ -15,22 +15,31 @@ interface UserTypeSelectorProps {
   className?: string
 }
 
+// Updated user type options for 28-table schema
 const userTypeOptions = [
   {
-    value: UserType.STUDENT,
-    label: 'Student',
-    description: 'Looking for internship opportunities',
+    value: UserType.CANDIDATE,
+    label: 'Candidate',
+    description: 'Looking for internships and opportunities',
     icon: GraduationCap,
     color: 'bg-blue-500',
     hoverColor: 'hover:bg-blue-50 hover:border-blue-200'
   },
   {
-    value: UserType.COMPANY,
+    value: UserType.INDUSTRY,
     label: 'Company',
-    description: 'Hiring interns and talent',
+    description: 'Hiring talent and posting opportunities',
     icon: Building2,
     color: 'bg-green-500',
     hoverColor: 'hover:bg-green-50 hover:border-green-200'
+  },
+  {
+    value: UserType.INSTITUTE,
+    label: 'Institute',
+    description: 'Educational institution managing students',
+    icon: School,
+    color: 'bg-purple-500',
+    hoverColor: 'hover:bg-purple-50 hover:border-purple-200'
   }
 ]
 
@@ -42,7 +51,7 @@ export function UserTypeSelector({ selectedType, onSelect, className = '' }: Use
         <p className="text-sm text-gray-600">Select the option that best describes you</p>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {userTypeOptions.map((option) => {
           const Icon = option.icon
           const isSelected = selectedType === option.value
@@ -51,8 +60,8 @@ export function UserTypeSelector({ selectedType, onSelect, className = '' }: Use
             <Card
               key={option.value}
               className={`cursor-pointer transition-all duration-200 ${
-                isSelected 
-                  ? 'border-primary-500 bg-primary-50 shadow-md scale-105' 
+                isSelected
+                  ? 'border-primary-500 bg-primary-50 shadow-md scale-105'
                   : `border-gray-200 ${option.hoverColor}`
               }`}
               onClick={() => onSelect(option.value)}

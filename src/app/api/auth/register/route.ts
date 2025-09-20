@@ -1,6 +1,6 @@
 /**
  * User Registration API Route
- * NextIntern - Authentication System
+ * NextIntern v2 - Updated for 28-Table Schema
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -10,7 +10,18 @@ import { UserType } from '@prisma/client'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { email, password, userType, firstName, lastName, companyName, industry } = body
+    const { 
+      email, 
+      password, 
+      userType, 
+      firstName, 
+      lastName, 
+      companyName, 
+      industry,
+      instituteName,
+      instituteType,
+      affiliatedUniversity
+    } = body
 
     // Basic validation
     if (!email || !password || !userType) {
@@ -27,18 +38,42 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Validate user type specific fields
-    if (userType === UserType.STUDENT && (!firstName || !lastName)) {
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
       return NextResponse.json(
-        { error: 'First name and last name are required for students' },
+        { error: 'Invalid email format' },
         { status: 400 }
       )
     }
 
-    if (userType === UserType.COMPANY && !companyName) {
+    // Validate user type specific fields
+    if (userType === UserType.CANDIDATE && (!firstName || !lastName)) {
+      return NextResponse.json(
+        { error: 'First name and last name are required for candidates' },
+        { status: 400 }
+      )
+    }
+
+    if (userType === UserType.INDUSTRY && !companyName) {
       return NextResponse.json(
         { error: 'Company name is required for companies' },
         { status: 400 }
+      )
+    }
+
+    if (userType === UserType.INSTITUTE && !instituteName) {
+      return NextResponse.json(
+        { error: 'Institute name is required for institutes' },
+        { status: 400 }
+      )
+    }
+
+    // Admin registration should be restricted (optional check)
+    if (userType === UserType.ADMIN) {
+      return NextResponse.json(
+        { error: 'Admin registration is not allowed through this endpoint' },
+        { status: 403 }
       )
     }
 
@@ -50,12 +85,18 @@ export async function POST(request: NextRequest) {
       firstName,
       lastName,
       companyName,
-      industry
+      industry,
+      instituteName,
+      instituteType
     })
 
     if (result.success && result.user) {
       return NextResponse.json(
-        { message: 'Account created successfully', userId: result.user.id },
+        { 
+          message: 'Account created successfully', 
+          userId: result.user.id,
+          userType: result.user.userType
+        },
         { status: 201 }
       )
     } else {
@@ -66,6 +107,17 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     console.error('Registration error:', error)
+    
+    // Handle specific database errors
+    if (error instanceof Error) {
+      if (error.message.includes('Unique constraint')) {
+        return NextResponse.json(
+          { error: 'Email address is already registered' },
+          { status: 409 }
+        )
+      }
+    }
+    
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

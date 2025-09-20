@@ -1,6 +1,6 @@
 /**
  * Login Form Component
- * NextIntern - Authentication System
+ * NextIntern v2 - Updated for 28-Table Schema
  */
 
 'use client'
@@ -50,8 +50,8 @@ export function LoginForm({ userType, onSwitchToRegister }: LoginFormProps) {
       if (result?.error) {
         setError('Invalid email or password')
       } else if (result?.ok) {
-        // Redirect to appropriate dashboard
-        const dashboardUrl = userType ? getDashboardUrl(userType) : '/student'
+        // Redirect to appropriate dashboard based on user type
+        const dashboardUrl = userType ? getDashboardUrl(userType) : '/candidate'
         router.push(dashboardUrl)
         router.refresh()
       }
@@ -79,6 +79,20 @@ export function LoginForm({ userType, onSwitchToRegister }: LoginFormProps) {
     if (error) setError(null) // Clear error when user starts typing
   }
 
+  // Get user type display name
+  const getUserTypeLabel = () => {
+    if (!userType) return 'User'
+    
+    const labels = {
+      [UserType.CANDIDATE]: 'Candidate',
+      [UserType.INDUSTRY]: 'Company',
+      [UserType.INSTITUTE]: 'Institute',
+      [UserType.ADMIN]: 'Admin'
+    }
+    
+    return labels[userType] || 'User'
+  }
+
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="space-y-2 text-center">
@@ -86,8 +100,7 @@ export function LoginForm({ userType, onSwitchToRegister }: LoginFormProps) {
           Welcome Back
         </CardTitle>
         <p className="text-gray-600">
-          {userType === UserType.STUDENT ? 'Student' : 
-           userType === UserType.COMPANY ? 'Company' : 'User'} Sign In
+          {getUserTypeLabel()} Sign In
         </p>
       </CardHeader>
       

@@ -1,6 +1,6 @@
 /**
  * Check Email Availability API Route
- * NextIntern - Authentication System
+ * NextIntern v2 - Updated for 28-Table Schema
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -18,16 +18,35 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Basic email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      return NextResponse.json(
+        { 
+          error: 'Invalid email format',
+          exists: false,
+          available: false
+        },
+        { status: 400 }
+      )
+    }
+
+    // Check if email exists in database
     const exists = await checkEmailExists(email)
-    
+
     return NextResponse.json({
       exists,
-      available: !exists
+      available: !exists,
+      email: email.toLowerCase() // Return normalized email
     })
   } catch (error) {
     console.error('Check email error:', error)
     return NextResponse.json(
-      { error: 'Failed to check email availability' },
+      { 
+        error: 'Failed to check email availability',
+        exists: false,
+        available: false
+      },
       { status: 500 }
     )
   }
