@@ -1,12 +1,11 @@
-/**
- * Sign Up Page
- * NextIntern v2 - Updated for 28-Table Schema
- */
+// src/app/auth/signup/page.tsx
+// Sign Up Page - NextIntern v2 - Clean Auth Style
 
 'use client'
 
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
+import Link from 'next/link'
 import { UserType } from '@prisma/client'
 import { UserTypeSelector } from '@/components/auth/UserTypeSelector'
 import { RegisterForm } from '@/components/auth/RegisterForm'
@@ -75,16 +74,25 @@ export default function SignUpPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center p-4">
+      
+      {/* Brand Logo */}
+      <div className="absolute top-8 left-8">
+        <Link href="/" className="text-2xl font-bold font-manrope text-primary-600">
+          NextIntern
+        </Link>
+      </div>
+
+      {/* Main Content */}
       <div className="w-full max-w-md space-y-6">
         
         {/* Header */}
         <div className="text-center">
           <h1 className="text-3xl font-bold text-gray-900 font-manrope mb-2">
-            NextIntern
+            Create Account
           </h1>
           <p className="text-gray-600">
-            {showTypeSelector ? 'Create your account' : `Join as ${getUserTypeDisplayName()}`}
+            {showTypeSelector ? 'Join NextIntern today' : `Join as ${getUserTypeDisplayName()}`}
           </p>
         </div>
 
@@ -121,12 +129,12 @@ export default function SignUpPage() {
         {/* Footer Links */}
         <div className="text-center text-sm text-gray-600 space-y-2">
           <p>
-            Need help? <a href="/help" className="text-primary-600 hover:underline">Contact Support</a>
+            Need help? <Link href="/help" className="text-primary-600 hover:underline">Contact Support</Link>
           </p>
           <div className="flex justify-center space-x-4">
-            <a href="/privacy" className="hover:text-gray-900">Privacy Policy</a>
+            <Link href="/privacy" className="hover:text-gray-900">Privacy Policy</Link>
             <span>•</span>
-            <a href="/terms" className="hover:text-gray-900">Terms of Service</a>
+            <Link href="/terms" className="hover:text-gray-900">Terms of Service</Link>
           </div>
         </div>
       </div>

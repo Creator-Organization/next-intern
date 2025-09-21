@@ -1,7 +1,5 @@
-/**
- * Register Form Component (Updated for 28-Table Schema)
- * NextIntern v2 - Authentication System
- */
+// src/components/auth/RegisterForm.tsx
+// Register Form Component - NextIntern v2 - Fixed
 
 'use client'
 
@@ -13,6 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Eye, EyeOff, Loader2, CheckCircle, XCircle } from 'lucide-react'
 import { UserType } from '@prisma/client'
+import { getDashboardUrl } from '@/lib/auth-utils'
 
 interface RegisterFormProps {
   userType: UserType
@@ -173,21 +172,7 @@ export function RegisterForm({ userType, onSwitchToLogin }: RegisterFormProps) {
 
         if (signInResult?.ok) {
           // Get dashboard URL based on user type
-          let dashboardUrl = '/'
-          switch (userType) {
-            case UserType.CANDIDATE:
-              dashboardUrl = '/candidate'
-              break
-            case UserType.INDUSTRY:
-              dashboardUrl = '/industry'
-              break
-            case UserType.INSTITUTE:
-              dashboardUrl = '/institute'
-              break
-            case UserType.ADMIN:
-              dashboardUrl = '/admin'
-              break
-          }
+          const dashboardUrl = getDashboardUrl(userType)
           router.push(dashboardUrl)
         } else {
           // Registration succeeded but auto-login failed, redirect to login
@@ -206,22 +191,7 @@ export function RegisterForm({ userType, onSwitchToLogin }: RegisterFormProps) {
   const handleGoogleSignIn = async () => {
     setIsLoading(true)
     try {
-      let callbackUrl = '/'
-      switch (userType) {
-        case UserType.CANDIDATE:
-          callbackUrl = '/candidate'
-          break
-        case UserType.INDUSTRY:
-          callbackUrl = '/industry'
-          break
-        case UserType.INSTITUTE:
-          callbackUrl = '/institute'
-          break
-        case UserType.ADMIN:
-          callbackUrl = '/admin'
-          break
-      }
-      
+      const callbackUrl = getDashboardUrl(userType)
       await signIn('google', { callbackUrl })
     } catch {
       setError('Google sign-in failed')
@@ -355,13 +325,6 @@ export function RegisterForm({ userType, onSwitchToLogin }: RegisterFormProps) {
                 onChange={(e) => handleInputChange('instituteType', e.target.value)}
                 disabled={isLoading}
               />
-              <Input
-                label="Affiliated University (Optional)"
-                placeholder="Parent University if applicable"
-                value={(formData as InstituteFormData).affiliatedUniversity || ''}
-                onChange={(e) => handleInputChange('affiliatedUniversity', e.target.value)}
-                disabled={isLoading}
-              />
             </>
           )}
           
@@ -457,7 +420,7 @@ export function RegisterForm({ userType, onSwitchToLogin }: RegisterFormProps) {
           
           <Button
             type="submit"
-            className="w-full bg-primary hover:bg-primary-hover"
+            className="w-full bg-primary-600 hover:bg-primary-700 text-white"
             disabled={isLoading || !isFormValid()}
           >
             {isLoading ? (
