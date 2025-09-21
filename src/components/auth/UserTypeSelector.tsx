@@ -1,7 +1,5 @@
-/**
- * User Type Selector Component
- * NextIntern v2 - Updated for 28-Table Schema
- */
+// src/components/auth/UserTypeSelector.tsx
+// User Type Selector Component - NextIntern v2
 
 'use client'
 
@@ -51,7 +49,7 @@ export function UserTypeSelector({ selectedType, onSelect, className = '' }: Use
         <p className="text-sm text-gray-600">Select the option that best describes you</p>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4">
         {userTypeOptions.map((option) => {
           const Icon = option.icon
           const isSelected = selectedType === option.value
@@ -66,27 +64,28 @@ export function UserTypeSelector({ selectedType, onSelect, className = '' }: Use
               }`}
               onClick={() => onSelect(option.value)}
             >
-              <CardContent className="p-6 text-center">
-                <div className={`w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center ${
+              <CardContent className="p-6 flex items-center space-x-4">
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${
                   isSelected ? 'bg-primary-500' : option.color
                 }`}>
-                  <Icon className="w-8 h-8 text-white" />
+                  <Icon className="w-6 h-6 text-white" />
                 </div>
                 
-                <h4 className={`text-lg font-semibold mb-2 ${
-                  isSelected ? 'text-primary-700' : 'text-gray-900'
-                }`}>
-                  {option.label}
-                </h4>
-                
-                <p className={`text-sm ${
-                  isSelected ? 'text-primary-600' : 'text-gray-600'
-                }`}>
-                  {option.description}
-                </p>
+                <div className="flex-1">
+                  <h4 className={`text-lg font-semibold mb-1 ${
+                    isSelected ? 'text-primary-700' : 'text-gray-900'
+                  }`}>
+                    {option.label}
+                  </h4>
+                  <p className={`text-sm ${
+                    isSelected ? 'text-primary-600' : 'text-gray-600'
+                  }`}>
+                    {option.description}
+                  </p>
+                </div>
                 
                 {isSelected && (
-                  <div className="mt-3 flex items-center justify-center">
+                  <div className="flex items-center">
                     <div className="w-2 h-2 bg-primary-500 rounded-full animate-pulse"></div>
                     <span className="ml-2 text-xs font-medium text-primary-600">Selected</span>
                   </div>

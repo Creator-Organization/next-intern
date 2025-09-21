@@ -1,7 +1,5 @@
-/**
- * Login Form Component
- * NextIntern v2 - Updated for 28-Table Schema
- */
+// src/components/auth/LoginForm.tsx
+// Login Form Component - NextIntern v2 - Fixed
 
 'use client'
 
@@ -34,6 +32,20 @@ export function LoginForm({ userType, onSwitchToRegister }: LoginFormProps) {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Get user type display name
+  const getUserTypeDisplayName = (userType?: UserType) => {
+    if (!userType) return 'User'
+    
+    const displayNames = {
+      [UserType.CANDIDATE]: 'Candidate',
+      [UserType.INDUSTRY]: 'Company',
+      [UserType.INSTITUTE]: 'Institute',
+      [UserType.ADMIN]: 'Admin'
+    }
+    
+    return displayNames[userType] || 'User'
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -79,20 +91,6 @@ export function LoginForm({ userType, onSwitchToRegister }: LoginFormProps) {
     if (error) setError(null) // Clear error when user starts typing
   }
 
-  // Get user type display name
-  const getUserTypeLabel = () => {
-    if (!userType) return 'User'
-    
-    const labels = {
-      [UserType.CANDIDATE]: 'Candidate',
-      [UserType.INDUSTRY]: 'Company',
-      [UserType.INSTITUTE]: 'Institute',
-      [UserType.ADMIN]: 'Admin'
-    }
-    
-    return labels[userType] || 'User'
-  }
-
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="space-y-2 text-center">
@@ -100,7 +98,7 @@ export function LoginForm({ userType, onSwitchToRegister }: LoginFormProps) {
           Welcome Back
         </CardTitle>
         <p className="text-gray-600">
-          {getUserTypeLabel()} Sign In
+          {userType ? getUserTypeDisplayName(userType) : 'User'} Sign In
         </p>
       </CardHeader>
       
@@ -144,7 +142,7 @@ export function LoginForm({ userType, onSwitchToRegister }: LoginFormProps) {
           
           <Button
             type="submit"
-            className="w-full bg-primary hover:bg-primary-hover"
+            className="w-full bg-primary-600 hover:bg-primary-700 text-white"
             disabled={isLoading || !formData.email || !formData.password}
           >
             {isLoading ? (
@@ -210,7 +208,7 @@ export function LoginForm({ userType, onSwitchToRegister }: LoginFormProps) {
         
         <p className="text-center">
           <a
-            href="/auth/recovery"
+            href="/auth/forgot-password"
             className="text-sm text-primary-600 hover:text-primary-700 hover:underline"
           >
             Forgot your password?

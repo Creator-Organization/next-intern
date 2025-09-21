@@ -1,4 +1,4 @@
-// src/app/page.tsx - Direct Database Connection for 28-Table Schema
+// src/app/page.tsx - Fixed Navigation for 28-Table Schema
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
@@ -137,7 +137,7 @@ export default async function LandingPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Navigation Header */}
+      {/* Navigation Header - FIXED NAVIGATION */}
       <nav className="border-b border-gray-200 bg-white/95 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
@@ -153,16 +153,22 @@ export default async function LandingPage() {
               <Link href="/companies" className="text-gray-600 hover:text-primary-600 transition-colors">
                 Companies
               </Link>
+              <Link href="/pricing" className="text-gray-600 hover:text-primary-600 transition-colors">
+                Pricing
+              </Link>
               <Link href="/about" className="text-gray-600 hover:text-primary-600 transition-colors">
                 About
               </Link>
+              <Link href="/help" className="text-gray-600 hover:text-primary-600 transition-colors">
+                Help
+              </Link>
               <div className="flex items-center space-x-3">
-                <Link href="/auth/candidate">
+                <Link href="/auth/signin">
                   <Button variant="secondary" size="sm">
                     Sign In
                   </Button>
                 </Link>
-                <Link href="/auth/candidate">
+                <Link href="/auth/signup">
                   <Button size="sm">
                     Get Started
                   </Button>
@@ -173,7 +179,7 @@ export default async function LandingPage() {
         </div>
       </nav>
 
-      {/* Hero Section */}
+      {/* Hero Section - FIXED LINKS */}
       <section className="relative bg-gradient-to-br from-primary-50 via-white to-primary-100 py-20 lg:py-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
@@ -192,13 +198,13 @@ export default async function LandingPage() {
               </div>
               
               <div className="flex flex-col sm:flex-row gap-4">
-                <Link href="/auth/candidate">
+                <Link href="/auth/signup?type=candidate">
                   <Button size="lg" className="w-full sm:w-auto group">
                     Find Your Opportunity
                     <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                   </Button>
                 </Link>
-                <Link href="/auth/industry">
+                <Link href="/auth/signup?type=industry">
                   <Button variant="secondary" size="lg" className="w-full sm:w-auto">
                     Hire Top Talent
                   </Button>
@@ -290,7 +296,7 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* Featured Categories */}
+      {/* Featured Categories - FIXED LINKS */}
       <section className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
@@ -304,7 +310,7 @@ export default async function LandingPage() {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {stats.categories.map((category) => (
-              <Link href={`/categories/${category.slug}`} key={category.id}>
+              <Link href="/opportunities" key={category.id}>
                 <Card className="p-6 hover:shadow-lg transition-shadow border-0 bg-white group cursor-pointer">
                   <CardHeader className="p-0 pb-4">
                     <div 
@@ -336,7 +342,7 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* Recent Opportunities */}
+      {/* Recent Opportunities - FIXED LINKS */}
       {stats.recentOpportunities.length > 0 && (
         <section className="py-20 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -391,9 +397,9 @@ export default async function LandingPage() {
                       <span className="text-sm text-gray-500">
                         {opportunity.application_count} applications
                       </span>
-                      <Link href={`/opportunities/${opportunity.slug}`}>
+                      <Link href="/opportunities">
                         <Button size="sm">
-                          Apply Now
+                          View Details
                         </Button>
                       </Link>
                     </div>
@@ -414,7 +420,7 @@ export default async function LandingPage() {
         </section>
       )}
 
-      {/* CTA Section */}
+      {/* CTA Section - FIXED LINKS */}
       <section className="py-20 bg-gradient-to-r from-primary-600 to-primary-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl lg:text-4xl font-bold text-white font-manrope mb-6">
@@ -425,12 +431,12 @@ export default async function LandingPage() {
             Your next opportunity is just one click away.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/auth/candidate">
+            <Link href="/auth/signup?type=candidate">
               <Button size="lg" variant="secondary" className="w-full sm:w-auto">
                 Join as Candidate
               </Button>
             </Link>
-            <Link href="/auth/industry">
+            <Link href="/auth/signup?type=industry">
               <Button size="lg" variant="secondary" className="w-full sm:w-auto bg-white text-primary-600 hover:bg-gray-100">
                 Post Opportunities
               </Button>
@@ -439,7 +445,7 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* Footer */}
+      {/* Footer - FIXED LINKS */}
       <footer className="bg-gray-900 text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-4 gap-8">
@@ -458,11 +464,14 @@ export default async function LandingPage() {
                 <Link href="/opportunities" className="block text-gray-400 hover:text-white transition-colors">
                   Browse Opportunities
                 </Link>
-                <Link href="/auth/candidate" className="block text-gray-400 hover:text-white transition-colors">
+                <Link href="/auth/signup?type=candidate" className="block text-gray-400 hover:text-white transition-colors">
                   Sign Up
                 </Link>
-                <Link href="/resources" className="block text-gray-400 hover:text-white transition-colors">
-                  Career Resources
+                <Link href="/how-it-works" className="block text-gray-400 hover:text-white transition-colors">
+                  How It Works
+                </Link>
+                <Link href="/help" className="block text-gray-400 hover:text-white transition-colors">
+                  Help Center
                 </Link>
               </div>
             </div>
@@ -470,7 +479,7 @@ export default async function LandingPage() {
             <div>
               <h4 className="font-semibold text-white mb-4">For Companies</h4>
               <div className="space-y-2">
-                <Link href="/auth/industry" className="block text-gray-400 hover:text-white transition-colors">
+                <Link href="/auth/signup?type=industry" className="block text-gray-400 hover:text-white transition-colors">
                   Post Opportunities
                 </Link>
                 <Link href="/pricing" className="block text-gray-400 hover:text-white transition-colors">
@@ -478,6 +487,9 @@ export default async function LandingPage() {
                 </Link>
                 <Link href="/contact" className="block text-gray-400 hover:text-white transition-colors">
                   Contact Sales
+                </Link>
+                <Link href="/companies" className="block text-gray-400 hover:text-white transition-colors">
+                  Browse Companies
                 </Link>
               </div>
             </div>
@@ -487,6 +499,9 @@ export default async function LandingPage() {
               <div className="space-y-2">
                 <Link href="/about" className="block text-gray-400 hover:text-white transition-colors">
                   About Us
+                </Link>
+                <Link href="/faq" className="block text-gray-400 hover:text-white transition-colors">
+                  FAQ
                 </Link>
                 <Link href="/privacy" className="block text-gray-400 hover:text-white transition-colors">
                   Privacy Policy
