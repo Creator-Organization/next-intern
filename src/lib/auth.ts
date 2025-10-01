@@ -1,6 +1,6 @@
 /**
  * NextAuth.js Configuration
- * NextIntern v2 - Updated for 28-Table Schema
+ * NextIntern v2 - Final Corrected Version
  */
 
 import NextAuth, { type NextAuthConfig } from 'next-auth'
@@ -10,6 +10,64 @@ import { PrismaAdapter } from '@auth/prisma-adapter'
 import bcrypt from 'bcryptjs'
 import { db } from './db'
 import { UserType } from '@prisma/client'
+
+// Type definitions for profile data
+type CandidateProfile = {
+  id: string
+  firstName: string
+  lastName: string
+  showFullName: boolean
+}
+
+type IndustryProfile = {
+  id: string
+  companyName: string
+  industry: string
+}
+
+type InstituteProfile = {
+  id: string
+  instituteName: string
+  instituteType: string
+}
+
+// Extend NextAuth types
+declare module 'next-auth' {
+  interface User {
+    userType: UserType
+    isVerified?: boolean
+    isPremium?: boolean
+    candidate?: CandidateProfile | null
+    industry?: IndustryProfile | null
+    institute?: InstituteProfile | null
+  }
+
+  interface Session {
+    user: {
+      id: string
+      email: string
+      name: string
+      userType: UserType
+      isVerified: boolean
+      isPremium: boolean
+      candidate?: CandidateProfile | null
+      industry?: IndustryProfile | null
+      institute?: InstituteProfile | null
+    }
+  }
+}
+
+declare module 'next-auth/jwt' {
+  interface JWT {
+    userId: string
+    userType: UserType
+    isVerified: boolean
+    isPremium: boolean
+    candidate?: CandidateProfile | null
+    industry?: IndustryProfile | null
+    institute?: InstituteProfile | null
+  }
+}
 
 // Auth configuration
 export const authConfig: NextAuthConfig = {
@@ -42,13 +100,32 @@ export const authConfig: NextAuthConfig = {
         }
 
         try {
-          // Find user by email - Updated includes for new schema
+          // Find user by email with profile data
           const user = await db.user.findUnique({
             where: { email: credentials.email as string },
             include: {
-              candidate: true,
-              industry: true,
-              institute: true
+              candidate: {
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                  showFullName: true
+                }
+              },
+              industry: {
+                select: {
+                  id: true,
+                  companyName: true,
+                  industry: true
+                }
+              },
+              institute: {
+                select: {
+                  id: true,
+                  instituteName: true,
+                  instituteType: true
+                }
+              }
             }
           })
 
@@ -66,7 +143,7 @@ export const authConfig: NextAuthConfig = {
             return null
           }
 
-          // Return user data for session - Updated for new schema
+          // Return user data for session
           let displayName = user.email.split('@')[0] // fallback
 
           if (user.candidate) {
@@ -80,10 +157,13 @@ export const authConfig: NextAuthConfig = {
           return {
             id: user.id,
             email: user.email,
+            name: displayName,
             userType: user.userType,
             isVerified: user.isVerified,
             isPremium: user.isPremium,
-            name: displayName
+            candidate: user.candidate,
+            industry: user.industry,
+            institute: user.institute
           }
         } catch (error) {
           console.error('Auth error:', error)
@@ -93,39 +173,41 @@ export const authConfig: NextAuthConfig = {
     })
   ],
 
-  // Custom pages - Updated paths for new user types
   pages: {
     signIn: '/auth/signin',
     error: '/auth/error'
   },
 
-  // Session configuration
   session: {
     strategy: 'jwt',
     maxAge: 30 * 24 * 60 * 60, // 30 days
     updateAge: 24 * 60 * 60    // 24 hours
   },
 
-  // Callbacks for JWT and session customization
   callbacks: {
     async jwt({ token, user, account }) {
       // Initial sign in
       if (account && user) {
-        token.userType = user.userType
-        token.isVerified = user.isVerified
-        token.isPremium = user.isPremium || false
         token.userId = user.id
+        token.userType = user.userType
+        token.isVerified = user.isVerified ?? false
+        token.isPremium = user.isPremium ?? false
+        token.candidate = user.candidate as CandidateProfile | null
+        token.industry = user.industry as IndustryProfile | null
+        token.institute = user.institute as InstituteProfile | null
       }
       return token
     },
 
     async session({ session, token }) {
-      // Send properties to the client
-      if (token) {
-        session.user.id = token.userId as string
-        session.user.userType = token.userType as UserType
-        session.user.isVerified = token.isVerified as boolean
-        session.user.isPremium = (token.isPremium as boolean) || false
+      if (token && session.user) {
+        session.user.id = token.userId
+        session.user.userType = token.userType
+        session.user.isVerified = token.isVerified
+        session.user.isPremium = token.isPremium
+        session.user.candidate = token.candidate
+        session.user.industry = token.industry
+        session.user.institute = token.institute
       }
       return session
     },
@@ -135,14 +217,45 @@ export const authConfig: NextAuthConfig = {
         try {
           // Check if user exists
           const existingUser = await db.user.findUnique({
-            where: { email: user.email! }
+            where: { email: user.email ?? '' },
+            include: {
+              candidate: {
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                  showFullName: true
+                }
+              },
+              industry: {
+                select: {
+                  id: true,
+                  companyName: true,
+                  industry: true
+                }
+              },
+              institute: {
+                select: {
+                  id: true,
+                  instituteName: true,
+                  instituteType: true
+                }
+              }
+            }
           })
 
           if (!existingUser) {
-            // For new Google users, we'll need to collect user type
-            // This will be handled in the sign-up flow
+            // For new Google users, redirect to complete registration
             return true
           }
+
+          // Add profile data to user object for session
+          user.userType = existingUser.userType
+          user.isVerified = existingUser.isVerified
+          user.isPremium = existingUser.isPremium
+          user.candidate = existingUser.candidate
+          user.industry = existingUser.industry
+          user.institute = existingUser.institute
 
           // Update Google ID if not set
           if (!existingUser.googleId && profile?.sub) {
@@ -177,35 +290,27 @@ export const authConfig: NextAuthConfig = {
           })
         } catch (error) {
           console.error('Failed to update last login:', error)
-          // Don't fail login for this
         }
       }
 
       return true
     },
 
-    // Redirect after sign in based on user type
     async redirect({ url, baseUrl }) {
-      // If url is relative, resolve it
       if (url.startsWith('/')) {
         return `${baseUrl}${url}`
       }
-      // If url is on the same origin, allow it
       if (new URL(url).origin === baseUrl) {
         return url
       }
-      // Default redirect based on user type would need session access
-      // For now, redirect to home
       return `${baseUrl}/`
     }
   },
 
-  // Events
   events: {
     async signIn({ user, account }) {
       console.log(`User signed in: ${user.email} via ${account?.provider}`)
       
-      // Update last login time
       if (user.id) {
         try {
           await db.user.update({
@@ -223,9 +328,9 @@ export const authConfig: NextAuthConfig = {
     }
   },
 
-  // Security settings
   useSecureCookies: process.env.NODE_ENV === 'production',
   debug: process.env.NODE_ENV === 'development'
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth(authConfig)
+export const authOptions = authConfig

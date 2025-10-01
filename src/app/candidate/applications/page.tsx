@@ -67,7 +67,7 @@ const ApplicationsPage = () => {
       if (status !== 'authenticated') return;
 
       try {
-        const response = await fetch('/api/candidate/applications');
+        const response = await fetch('/api/candidates/applications');
         if (response.ok) {
           const data = await response.json();
           setApplications(data.data || []);

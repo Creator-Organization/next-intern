@@ -139,7 +139,7 @@ const ApplyPage = ({ params }: ApplyPageProps) => {
   useEffect(() => {
     const fetchOpportunity = async () => {
       try {
-        const response = await fetch(`/api/candidate/opportunities/${params.id}`);
+        const response = await fetch(`/api/opportunities/${params.id}`);
         if (response.ok) {
           const data = await response.json();
           setOpportunity(data.data || getFallbackOpportunity());
@@ -178,7 +178,7 @@ const ApplyPage = ({ params }: ApplyPageProps) => {
     setError(null);
 
     try {
-      const response = await fetch(`/api/candidate/opportunities/${params.id}/apply`, {
+      const response = await fetch(`/api/opportunities/${params.id}/apply`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -2,8 +2,6 @@
 // Opportunities API with Privacy Controls - NextIntern 2.0
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 
 export async function GET(request: NextRequest) {
@@ -111,7 +109,7 @@ export async function GET(request: NextRequest) {
         createdAt: new Date('2025-01-15'),
         industry: {
           id: 'ind1',
-          companyName: userType === 'INSTITUTE' ? 'TechCorp Solutions' : 'Company #123',
+          companyName: 'Company #123',
           industry: 'Technology',
           isVerified: true,
           showCompanyName: true,
