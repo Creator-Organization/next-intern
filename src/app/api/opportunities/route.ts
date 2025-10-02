@@ -2,8 +2,10 @@
 // Opportunities API with Privacy Controls - NextIntern 2.0
 
 import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 
+// GET - List opportunities with privacy filtering
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -70,15 +72,15 @@ export async function GET(request: NextRequest) {
       // Privacy control: hide company name based on settings and user premium status
       industry: {
         ...opportunity.industry,
-        companyName: (opportunity.industry.showCompanyName || isPremium) 
-          ? opportunity.industry.companyName 
+        companyName: (opportunity.industry.showCompanyName || isPremium)
+          ? opportunity.industry.companyName
           : `Company #${opportunity.industry.anonymousId.slice(-3)}`
       }
     }));
 
     console.log(`Returning ${processedOpportunities.length} opportunities`);
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       data: processedOpportunities,
       count: processedOpportunities.length,
       privacy: {
@@ -125,10 +127,214 @@ export async function GET(request: NextRequest) {
       }
     ];
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       data: fallbackOpportunities,
       count: fallbackOpportunities.length,
-      fallback: true 
+      fallback: true
     });
+  }
+}
+
+// POST - Create new opportunity with posting limits
+export async function POST(request: NextRequest) {
+  try {
+    const session = await auth();
+    
+    if (!session || session.user.userType !== 'INDUSTRY') {
+      return NextResponse.json({ 
+        error: 'Unauthorized - Industry users only' 
+      }, { status: 401 });
+    }
+
+    // Get industry profile
+    const user = await db.user.findUnique({
+      where: { id: session.user.id },
+      include: { industry: true }
+    });
+
+    if (!user?.industry?.id) {
+      return NextResponse.json({ 
+        error: 'Industry profile not found' 
+      }, { status: 404 });
+    }
+
+    const industryId = user.industry.id;
+    const isPremium = user.isPremium;
+
+    const body = await request.json();
+    const {
+      title,
+      description,
+      type,
+      workType,
+      categoryId,
+      locationId,
+      stipend,
+      currency,
+      duration,
+      requirements,
+      preferredSkills,
+      minQualification,
+      experienceRequired,
+      applicationDeadline,
+      startDate,
+      showCompanyName
+    } = body;
+
+    // Validation
+    if (!title || title.length < 10 || title.length > 100) {
+      return NextResponse.json({ 
+        error: 'Title must be between 10 and 100 characters' 
+      }, { status: 400 });
+    }
+
+    if (!description || description.length < 50 || description.length > 2000) {
+      return NextResponse.json({ 
+        error: 'Description must be between 50 and 2000 characters' 
+      }, { status: 400 });
+    }
+
+    if (!['INTERNSHIP', 'PROJECT', 'FREELANCING'].includes(type)) {
+      return NextResponse.json({ 
+        error: 'Invalid opportunity type' 
+      }, { status: 400 });
+    }
+
+    // CRITICAL: Check posting limits for free users
+    if (!isPremium) {
+      // Freelancing is premium-only
+      if (type === 'FREELANCING') {
+        return NextResponse.json({ 
+          error: 'Freelancing opportunities require a premium subscription',
+          upgradeTo: 'premium'
+        }, { status: 403 });
+      }
+
+      // Check monthly posting limits (3 per type)
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+
+      const postCount = await db.opportunity.count({
+        where: {
+          industryId,
+          type,
+          createdAt: { gte: startOfMonth }
+        }
+      });
+
+      if (postCount >= 3) {
+        return NextResponse.json({ 
+          error: `You have reached the monthly limit of 3 ${type} opportunities. Upgrade to premium for unlimited posting.`,
+          upgradeTo: 'premium',
+          currentCount: postCount,
+          limit: 3
+        }, { status: 403 });
+      }
+    }
+
+    // Generate unique slug
+    const baseSlug = title.toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
+    
+    let slug = baseSlug;
+    let counter = 1;
+    
+    while (await db.opportunity.findUnique({ where: { slug } })) {
+      slug = `${baseSlug}-${counter}`;
+      counter++;
+    }
+
+    // Parse and validate numeric fields
+    const parsedStipend = stipend ? parseInt(stipend.toString()) : null;
+    const parsedDuration = duration ? parseInt(duration.toString()) : 1; // Default to 1 if not provided
+    const parsedExperience = experienceRequired ? parseInt(experienceRequired.toString()) : 0;
+
+    // Create opportunity
+    const opportunity = await db.opportunity.create({
+      data: {
+        industryId,
+        categoryId,
+        locationId,
+        title,
+        slug,
+        description,
+        type,
+        workType,
+        stipend: parsedStipend,
+        currency: currency || 'INR',
+        duration: parsedDuration, // Fixed: Now always a number, never null
+        requirements,
+        preferredSkills: preferredSkills || null,
+        minQualification: minQualification || null,
+        experienceRequired: parsedExperience,
+        applicationDeadline: applicationDeadline ? new Date(applicationDeadline) : null,
+        startDate: startDate ? new Date(startDate) : null,
+        showCompanyName: showCompanyName || false,
+        isPremiumOnly: type === 'FREELANCING', // Freelancing is always premium-only
+        isActive: true
+      }
+    });
+
+    // Fetch related data separately since we didn't include them in create
+    const [industry, category, location] = await Promise.all([
+      db.industry.findUnique({
+        where: { id: industryId },
+        select: { companyName: true, anonymousId: true }
+      }),
+      db.category.findUnique({
+        where: { id: categoryId },
+        select: { name: true }
+      }),
+      db.location.findUnique({
+        where: { id: locationId },
+        select: { city: true, state: true }
+      })
+    ]);
+
+    // Update category opportunity count
+    await db.category.update({
+      where: { id: categoryId },
+      data: {
+        opportunityCount: { increment: 1 }
+      }
+    });
+
+    // Update location opportunity count
+    await db.location.update({
+      where: { id: locationId },
+      data: {
+        opportunityCount: { increment: 1 }
+      }
+    });
+
+    console.log('Opportunity created successfully:', {
+      id: opportunity.id,
+      title: opportunity.title,
+      type: opportunity.type,
+      industryId
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: 'Opportunity posted successfully',
+      data: {
+        id: opportunity.id,
+        title: opportunity.title,
+        slug: opportunity.slug,
+        type: opportunity.type,
+        companyName: industry?.companyName || 'Unknown',
+        category: category?.name || 'Unknown',
+        location: location ? `${location.city}, ${location.state}` : 'Unknown'
+      }
+    }, { status: 201 });
+
+  } catch (error) {
+    console.error('Create opportunity error:', error);
+    return NextResponse.json({
+      error: 'Failed to create opportunity',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
   }
 }

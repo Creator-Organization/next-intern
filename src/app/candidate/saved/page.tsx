@@ -16,7 +16,6 @@ import {
   Wallet,
   Building,
   MapPin,
-  Eye,
   Crown,
   EyeOff,
   Check,
