@@ -1,25 +1,25 @@
 // src/app/candidate/saved/page.tsx
 // Saved Opportunities Page - NextIntern 2.0
 
-"use client";
+'use client';
 
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { 
-  Bookmark, 
+import {
+  Bookmark,
   BookmarkX,
   Briefcase,
   User,
   FileText,
-  Clock, 
+  Clock,
   Wallet,
   Building,
   MapPin,
   Crown,
   EyeOff,
   Check,
-  Trash2
+  Trash2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -70,7 +70,9 @@ interface SavedOpportunity {
 const SavedPage = () => {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [savedOpportunities, setSavedOpportunities] = useState<SavedOpportunity[]>([]);
+  const [savedOpportunities, setSavedOpportunities] = useState<
+    SavedOpportunity[]
+  >([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -83,10 +85,11 @@ const SavedPage = () => {
 
   useEffect(() => {
     const fetchSavedOpportunities = async () => {
-      if (status !== 'authenticated') return;
+      if (status !== 'authenticated' || !session?.user?.candidate?.id) return;
 
       try {
-        const response = await fetch('/api/candidate/saved');
+        const candidateId = session.user.candidate.id;
+        const response = await fetch(`/api/candidates/${candidateId}/saved`);
         if (response.ok) {
           const data = await response.json();
           setSavedOpportunities(data.data || []);
@@ -108,12 +111,12 @@ const SavedPage = () => {
   const handleUnsave = async (opportunityId: string) => {
     try {
       const response = await fetch(`/api/candidates/saved/${opportunityId}`, {
-        method: 'DELETE'
+        method: 'DELETE',
       });
 
       if (response.ok) {
-        setSavedOpportunities(prev => 
-          prev.filter(saved => saved.opportunity.id !== opportunityId)
+        setSavedOpportunities((prev) =>
+          prev.filter((saved) => saved.opportunity.id !== opportunityId)
         );
       }
     } catch (error) {
@@ -121,7 +124,10 @@ const SavedPage = () => {
     }
   };
 
-  const getCompanyDisplayName = (industry: SavedOpportunity['opportunity']['industry'], isPremium: boolean) => {
+  const getCompanyDisplayName = (
+    industry: SavedOpportunity['opportunity']['industry'],
+    isPremium: boolean
+  ) => {
     if (industry.showCompanyName || isPremium) {
       return industry.companyName;
     }
@@ -132,7 +138,7 @@ const SavedPage = () => {
     const now = new Date();
     const diffTime = now.getTime() - new Date(date).getTime();
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays === 0) return 'Today';
     if (diffDays === 1) return '1 day ago';
     if (diffDays < 7) return `${diffDays} days ago`;
@@ -141,9 +147,9 @@ const SavedPage = () => {
 
   if (status === 'loading' || isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+          <div className="border-primary-600 mx-auto h-12 w-12 animate-spin rounded-full border-b-2"></div>
           <p className="mt-4 text-gray-600">Loading saved opportunities...</p>
         </div>
       </div>
@@ -159,39 +165,58 @@ const SavedPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      <Header user={user ? {
-        id: user.id,
-        email: user.email || '',
-        userType: user.userType,
-        candidate: user.name ? {
-          firstName: user.name.split(' ')[0] || '',
-          lastName: user.name.split(' ')[1] || ''
-        } : undefined
-      } : undefined} />
+      <Header
+        user={
+          user
+            ? {
+                id: user.id,
+                email: user.email || '',
+                userType: user.userType,
+                candidate: user.name
+                  ? {
+                      firstName: user.name.split(' ')[0] || '',
+                      lastName: user.name.split(' ')[1] || '',
+                    }
+                  : undefined,
+              }
+            : undefined
+        }
+      />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid lg:grid-cols-4 gap-8">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <div className="grid gap-8 lg:grid-cols-4">
           {/* Sidebar */}
           <aside className="lg:col-span-1">
             <Card className="sticky top-24">
               <CardHeader>
-                <CardTitle className="text-lg font-manrope">Navigation</CardTitle>
+                <CardTitle className="font-manrope text-lg">
+                  Navigation
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <nav className="space-y-2">
-                  <Link href="/candidate" className="flex items-center space-x-3 text-gray-600 hover:text-primary-600 hover:bg-primary-50 p-3 rounded-lg transition-colors">
+                  <Link
+                    href="/candidate"
+                    className="hover:text-primary-600 hover:bg-primary-50 flex items-center space-x-3 rounded-lg p-3 text-gray-600 transition-colors"
+                  >
                     <Briefcase className="h-5 w-5" />
                     <span>Dashboard</span>
                   </Link>
-                  <Link href="/candidate/applications" className="flex items-center space-x-3 text-gray-600 hover:text-primary-600 hover:bg-primary-50 p-3 rounded-lg transition-colors">
+                  <Link
+                    href="/candidate/applications"
+                    className="hover:text-primary-600 hover:bg-primary-50 flex items-center space-x-3 rounded-lg p-3 text-gray-600 transition-colors"
+                  >
                     <FileText className="h-5 w-5" />
                     <span>My Applications</span>
                   </Link>
-                  <div className="flex items-center space-x-3 text-primary-600 font-semibold bg-primary-50 p-3 rounded-lg border-l-4 border-primary-500">
+                  <div className="text-primary-600 bg-primary-50 border-primary-500 flex items-center space-x-3 rounded-lg border-l-4 p-3 font-semibold">
                     <Bookmark className="h-5 w-5" />
                     <span>Saved</span>
                   </div>
-                  <Link href="/candidate/profile" className="flex items-center space-x-3 text-gray-600 hover:text-primary-600 hover:bg-primary-50 p-3 rounded-lg transition-colors">
+                  <Link
+                    href="/candidate/profile"
+                    className="hover:text-primary-600 hover:bg-primary-50 flex items-center space-x-3 rounded-lg p-3 text-gray-600 transition-colors"
+                  >
                     <User className="h-5 w-5" />
                     <span>Profile</span>
                   </Link>
@@ -201,21 +226,24 @@ const SavedPage = () => {
           </aside>
 
           {/* Main Content */}
-          <main className="lg:col-span-3 space-y-6">
+          <main className="space-y-6 lg:col-span-3">
             {/* Header */}
             <Card>
               <CardContent className="p-6">
-                <div className="flex justify-between items-center">
+                <div className="flex items-center justify-between">
                   <div>
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2 font-manrope">
+                    <h1 className="font-manrope mb-2 text-3xl font-bold text-gray-900">
                       Saved Opportunities
                     </h1>
                     <p className="text-gray-600">
-                      Keep track of opportunities you&#39;re interested in applying to later.
+                      Keep track of opportunities you&#39;re interested in
+                      applying to later.
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-2xl font-bold text-primary-600">{savedOpportunities.length}</p>
+                    <p className="text-primary-600 text-2xl font-bold">
+                      {savedOpportunities.length}
+                    </p>
                     <p className="text-sm text-gray-500">Saved</p>
                   </div>
                 </div>
@@ -227,32 +255,40 @@ const SavedPage = () => {
               <div className="space-y-4">
                 {savedOpportunities.map((saved) => {
                   const opportunity = saved.opportunity;
-                  const companyName = getCompanyDisplayName(opportunity.industry, isPremium);
-                  const canApply = isPremium || opportunity.type !== 'FREELANCING';
+                  const companyName = getCompanyDisplayName(
+                    opportunity.industry,
+                    isPremium
+                  );
+                  const canApply =
+                    isPremium || opportunity.type !== 'FREELANCING';
 
                   return (
-                    <Card key={saved.id} className="hover:shadow-lg transition-shadow">
+                    <Card
+                      key={saved.id}
+                      className="transition-shadow hover:shadow-lg"
+                    >
                       <CardContent className="p-6">
-                        <div className="flex justify-between items-start mb-4">
+                        <div className="mb-4 flex items-start justify-between">
                           <div className="flex-grow">
-                            <div className="flex items-center gap-3 mb-2">
-                              <h3 className="text-xl font-bold text-gray-900 font-manrope">
+                            <div className="mb-2 flex items-center gap-3">
+                              <h3 className="font-manrope text-xl font-bold text-gray-900">
                                 {opportunity.title}
                               </h3>
                               {opportunity.isPremiumOnly && (
                                 <Crown className="h-5 w-5 text-yellow-500" />
                               )}
                             </div>
-                            
-                            <div className="flex items-center text-gray-600 mb-3">
-                              <Building className="h-4 w-4 mr-2" />
+
+                            <div className="mb-3 flex items-center text-gray-600">
+                              <Building className="mr-2 h-4 w-4" />
                               <span className="font-medium">{companyName}</span>
                               {opportunity.industry.isVerified && (
-                                <Check className="h-4 w-4 ml-2 text-green-500" />
+                                <Check className="ml-2 h-4 w-4 text-green-500" />
                               )}
-                              {!opportunity.industry.showCompanyName && !isPremium && (
-                                <EyeOff className="h-4 w-4 ml-2 text-gray-400" />
-                              )}
+                              {!opportunity.industry.showCompanyName &&
+                                !isPremium && (
+                                  <EyeOff className="ml-2 h-4 w-4 text-gray-400" />
+                                )}
                               <span className="mx-2 text-gray-400">•</span>
                               <span>{opportunity.industry.industry}</span>
                             </div>
@@ -263,7 +299,7 @@ const SavedPage = () => {
                               variant="ghost"
                               size="sm"
                               onClick={() => handleUnsave(opportunity.id)}
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                              className="text-red-600 hover:bg-red-50 hover:text-red-700"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -276,30 +312,33 @@ const SavedPage = () => {
                         </div>
 
                         {/* Description */}
-                        <p className="text-gray-700 mb-4 line-clamp-2">
+                        <p className="mb-4 line-clamp-2 text-gray-700">
                           {opportunity.description}
                         </p>
 
                         {/* Details */}
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 text-sm text-gray-600">
+                        <div className="mb-4 grid grid-cols-2 gap-4 text-sm text-gray-600 md:grid-cols-4">
                           <div className="flex items-center">
-                            <MapPin className="h-4 w-4 mr-2" />
+                            <MapPin className="mr-2 h-4 w-4" />
                             <span>{opportunity.workType}</span>
                           </div>
                           {opportunity.duration && (
                             <div className="flex items-center">
-                              <Clock className="h-4 w-4 mr-2" />
+                              <Clock className="mr-2 h-4 w-4" />
                               <span>{opportunity.duration} weeks</span>
                             </div>
                           )}
                           {opportunity.stipend && (
-                            <div className="flex items-center text-green-600 font-medium">
-                              <Wallet className="h-4 w-4 mr-2" />
-                              <span>{opportunity.currency}{opportunity.stipend.toLocaleString()}/month</span>
+                            <div className="flex items-center font-medium text-green-600">
+                              <Wallet className="mr-2 h-4 w-4" />
+                              <span>
+                                {opportunity.currency}
+                                {opportunity.stipend.toLocaleString()}/month
+                              </span>
                             </div>
                           )}
                           <div className="flex items-center text-gray-500">
-                            <Bookmark className="h-4 w-4 mr-2" />
+                            <Bookmark className="mr-2 h-4 w-4" />
                             <span>Saved {getTimeSince(saved.savedAt)}</span>
                           </div>
                         </div>
@@ -307,21 +346,23 @@ const SavedPage = () => {
                         {/* Skills */}
                         {opportunity.skills.length > 0 && (
                           <div className="flex flex-wrap gap-2">
-                            {opportunity.skills.slice(0, 5).map((skill, index) => (
-                              <span 
-                                key={index}
-                                className={`px-2 py-1 text-xs rounded-full ${
-                                  skill.isRequired 
-                                    ? 'bg-red-100 text-red-700' 
-                                    : 'bg-gray-100 text-gray-700'
-                                }`}
-                              >
-                                {skill.skillName}
-                                {skill.isRequired && ' *'}
-                              </span>
-                            ))}
+                            {opportunity.skills
+                              .slice(0, 5)
+                              .map((skill, index) => (
+                                <span
+                                  key={index}
+                                  className={`rounded-full px-2 py-1 text-xs ${
+                                    skill.isRequired
+                                      ? 'bg-red-100 text-red-700'
+                                      : 'bg-gray-100 text-gray-700'
+                                  }`}
+                                >
+                                  {skill.skillName}
+                                  {skill.isRequired && ' *'}
+                                </span>
+                              ))}
                             {opportunity.skills.length > 5 && (
-                              <span className="px-2 py-1 text-xs bg-gray-100 text-gray-500 rounded-full">
+                              <span className="rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-500">
                                 +{opportunity.skills.length - 5} more
                               </span>
                             )}
@@ -334,18 +375,17 @@ const SavedPage = () => {
               </div>
             ) : (
               <Card>
-                <CardContent className="text-center py-16">
-                  <BookmarkX className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                <CardContent className="py-16 text-center">
+                  <BookmarkX className="mx-auto mb-4 h-12 w-12 text-gray-400" />
+                  <h3 className="mb-2 text-lg font-semibold text-gray-900">
                     No saved opportunities yet
                   </h3>
-                  <p className="text-gray-600 mb-6">
-                    Start exploring and save opportunities that interest you to apply later.
+                  <p className="mb-6 text-gray-600">
+                    Start exploring and save opportunities that interest you to
+                    apply later.
                   </p>
                   <Link href="/candidate/browse">
-                    <Button>
-                      Browse Opportunities
-                    </Button>
+                    <Button>Browse Opportunities</Button>
                   </Link>
                 </CardContent>
               </Card>

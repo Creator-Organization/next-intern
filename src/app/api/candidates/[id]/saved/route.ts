@@ -86,3 +86,90 @@ export async function GET(
     });
   }
 }
+// Save a new opportunity (POST)
+export async function POST(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await auth();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const resolvedParams = await params;
+    const candidateId = resolvedParams.id;
+
+    const candidate = await db.candidate.findUnique({
+      where: { id: candidateId }
+    });
+
+    if (!candidate || candidate.userId !== session.user.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    }
+
+    const { opportunityId } = await request.json();
+
+    // Check if already saved
+    const existing = await db.savedOpportunity.findFirst({
+      where: {
+        candidateId,
+        opportunityId
+      }
+    });
+
+    if (existing) {
+      return NextResponse.json({ error: 'Already saved' }, { status: 400 });
+    }
+
+    // Save opportunity
+    const saved = await db.savedOpportunity.create({
+      data: {
+        candidateId,
+        opportunityId
+      }
+    });
+
+    return NextResponse.json({ success: true, data: saved });
+
+  } catch (error) {
+    console.error('Save opportunity error:', error);
+    return NextResponse.json({ error: 'Failed to save' }, { status: 500 });
+  }
+}
+
+// Unsave/delete (DELETE)
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await auth();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const resolvedParams = await params;
+    const candidateId = resolvedParams.id;
+
+    const { searchParams } = new URL(request.url);
+    const opportunityId = searchParams.get('opportunityId');
+
+    if (!opportunityId) {
+      return NextResponse.json({ error: 'Opportunity ID required' }, { status: 400 });
+    }
+
+    await db.savedOpportunity.deleteMany({
+      where: {
+        candidateId,
+        opportunityId
+      }
+    });
+
+    return NextResponse.json({ success: true });
+
+  } catch (error) {
+    console.error('Unsave error:', error);
+    return NextResponse.json({ error: 'Failed to unsave' }, { status: 500 });
+  }
+}
