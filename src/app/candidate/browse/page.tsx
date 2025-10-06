@@ -1,9 +1,6 @@
-// src/app/candidate/browse/page.tsx
-// Browse Opportunities Page - NextIntern 2.0
-
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -65,7 +62,7 @@ interface Opportunity {
   }>;
 }
 
-const BrowsePage = () => {
+function BrowseContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -120,7 +117,6 @@ const BrowsePage = () => {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    // Update URL params
     const params = new URLSearchParams();
     if (searchQuery) params.set('q', searchQuery);
     if (typeFilter !== 'all') params.set('type', typeFilter);
@@ -143,7 +139,6 @@ const BrowsePage = () => {
   };
 
   const handleSaveOpportunity = async (opportunityId: string) => {
-    // TODO: Implement save/unsave functionality
     console.log('Save opportunity:', opportunityId);
   };
 
@@ -186,7 +181,6 @@ const BrowsePage = () => {
       />
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Header */}
         <div className="mb-8">
           <h1 className="font-manrope mb-4 text-3xl font-bold text-gray-900">
             Browse Opportunities
@@ -197,7 +191,6 @@ const BrowsePage = () => {
           </p>
         </div>
 
-        {/* Search and Filters */}
         <Card className="mb-8">
           <CardContent className="p-6">
             <form onSubmit={handleSearch} className="space-y-4">
@@ -249,7 +242,6 @@ const BrowsePage = () => {
           </CardContent>
         </Card>
 
-        {/* Results */}
         {opportunities.length > 0 ? (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
@@ -328,12 +320,10 @@ const BrowsePage = () => {
                         </div>
                       </div>
 
-                      {/* Description */}
                       <p className="mb-4 line-clamp-2 text-gray-700">
                         {opportunity.description}
                       </p>
 
-                      {/* Details */}
                       <div className="mb-4 grid grid-cols-2 gap-4 text-sm text-gray-600 md:grid-cols-4">
                         <div className="flex items-center">
                           <MapPin className="mr-2 h-4 w-4" />
@@ -362,7 +352,6 @@ const BrowsePage = () => {
                         </div>
                       </div>
 
-                      {/* Skills */}
                       {opportunity.skills.length > 0 && (
                         <div className="flex flex-wrap gap-2">
                           {opportunity.skills
@@ -419,6 +408,12 @@ const BrowsePage = () => {
       </main>
     </div>
   );
-};
+}
 
-export default BrowsePage;
+export default function BrowsePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+      <BrowseContent />
+    </Suspense>
+  );
+}
