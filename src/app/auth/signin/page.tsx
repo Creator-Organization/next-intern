@@ -1,11 +1,6 @@
-/**
- * Sign In Page
- * NextIntern v2 - Updated for 28-Table Schema
- */
-
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { UserType } from '@prisma/client'
 import { UserTypeSelector } from '@/components/auth/UserTypeSelector'
@@ -13,21 +8,19 @@ import { LoginForm } from '@/components/auth/LoginForm'
 import { Card, CardContent } from '@/components/ui/card'
 import { ArrowLeft } from 'lucide-react'
 
-export default function SignInPage() {
+function SignInContent() {
   const searchParams = useSearchParams()
   const [selectedUserType, setSelectedUserType] = useState<UserType | null>(null)
   const [showTypeSelector, setShowTypeSelector] = useState(true)
 
   useEffect(() => {
-    // Check if user type is passed as URL parameter - Updated for new user types
     const userTypeParam = searchParams.get('type')
     
-    // Map URL params to new user types
     const userTypeMap: { [key: string]: UserType } = {
       'candidate': UserType.CANDIDATE,
-      'student': UserType.CANDIDATE,     // Legacy support
+      'student': UserType.CANDIDATE,
       'industry': UserType.INDUSTRY,
-      'company': UserType.INDUSTRY,      // Legacy support
+      'company': UserType.INDUSTRY,
       'institute': UserType.INSTITUTE,
       'admin': UserType.ADMIN
     }
@@ -49,7 +42,6 @@ export default function SignInPage() {
   }
 
   const handleSwitchToRegister = () => {
-    // Map user types to URL params for registration
     const typeParam = {
       [UserType.CANDIDATE]: 'candidate',
       [UserType.INDUSTRY]: 'industry',
@@ -60,7 +52,6 @@ export default function SignInPage() {
     window.location.href = `/auth/signup?type=${typeParam}`
   }
 
-  // Get user type display name
   const getUserTypeDisplayName = () => {
     if (!selectedUserType) return ''
     
@@ -78,7 +69,6 @@ export default function SignInPage() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6">
         
-        {/* Header */}
         <div className="text-center">
           <h1 className="text-3xl font-bold text-gray-900 font-manrope mb-2">
             NextIntern
@@ -89,7 +79,6 @@ export default function SignInPage() {
         </div>
 
         {showTypeSelector ? (
-          /* User Type Selection */
           <Card className="p-6">
             <CardContent className="p-0">
               <UserTypeSelector
@@ -99,9 +88,7 @@ export default function SignInPage() {
             </CardContent>
           </Card>
         ) : (
-          /* Login Form */
           <div className="space-y-4">
-            {/* Back Button */}
             <button
               onClick={handleBackToTypeSelection}
               className="flex items-center text-sm text-gray-600 hover:text-gray-900 transition-colors"
@@ -110,7 +97,6 @@ export default function SignInPage() {
               Back to account type selection
             </button>
 
-            {/* Login Form */}
             <LoginForm
               userType={selectedUserType || undefined}
               onSwitchToRegister={handleSwitchToRegister}
@@ -118,7 +104,6 @@ export default function SignInPage() {
           </div>
         )}
 
-        {/* Footer Links */}
         <div className="text-center text-sm text-gray-600 space-y-2">
           <p>
             Need help? <a href="/help" className="text-primary-600 hover:underline">Contact Support</a>
@@ -131,5 +116,13 @@ export default function SignInPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+      <SignInContent />
+    </Suspense>
   )
 }

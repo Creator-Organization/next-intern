@@ -1,9 +1,6 @@
-// src/app/auth/signup/page.tsx
-// Sign Up Page - NextIntern v2 - Clean Auth Style
-
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { UserType } from '@prisma/client'
@@ -12,21 +9,19 @@ import { RegisterForm } from '@/components/auth/RegisterForm'
 import { Card, CardContent } from '@/components/ui/card'
 import { ArrowLeft } from 'lucide-react'
 
-export default function SignUpPage() {
+function SignUpContent() {
   const searchParams = useSearchParams()
   const [selectedUserType, setSelectedUserType] = useState<UserType | null>(null)
   const [showTypeSelector, setShowTypeSelector] = useState(true)
 
   useEffect(() => {
-    // Check if user type is passed as URL parameter - Updated for new user types
     const userTypeParam = searchParams.get('type')
     
-    // Map URL params to new user types
     const userTypeMap: { [key: string]: UserType } = {
       'candidate': UserType.CANDIDATE,
-      'student': UserType.CANDIDATE,     // Legacy support
+      'student': UserType.CANDIDATE,
       'industry': UserType.INDUSTRY,
-      'company': UserType.INDUSTRY,      // Legacy support
+      'company': UserType.INDUSTRY,
       'institute': UserType.INSTITUTE,
       'admin': UserType.ADMIN
     }
@@ -48,7 +43,6 @@ export default function SignUpPage() {
   }
 
   const handleSwitchToLogin = () => {
-    // Map user types to URL params for login
     const typeParam = {
       [UserType.CANDIDATE]: 'candidate',
       [UserType.INDUSTRY]: 'industry',
@@ -59,7 +53,6 @@ export default function SignUpPage() {
     window.location.href = `/auth/signin?type=${typeParam}`
   }
 
-  // Get user type display name
   const getUserTypeDisplayName = () => {
     if (!selectedUserType) return ''
     
@@ -76,17 +69,14 @@ export default function SignUpPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center p-4">
       
-      {/* Brand Logo */}
       <div className="absolute top-8 left-8">
         <Link href="/" className="text-2xl font-bold font-manrope text-primary-600">
           NextIntern
         </Link>
       </div>
 
-      {/* Main Content */}
       <div className="w-full max-w-md space-y-6">
         
-        {/* Header */}
         <div className="text-center">
           <h1 className="text-3xl font-bold text-gray-900 font-manrope mb-2">
             Create Account
@@ -97,7 +87,6 @@ export default function SignUpPage() {
         </div>
 
         {showTypeSelector ? (
-          /* User Type Selection */
           <Card className="p-6">
             <CardContent className="p-0">
               <UserTypeSelector
@@ -107,9 +96,7 @@ export default function SignUpPage() {
             </CardContent>
           </Card>
         ) : (
-          /* Registration Form */
           <div className="space-y-4">
-            {/* Back Button */}
             <button
               onClick={handleBackToTypeSelection}
               className="flex items-center text-sm text-gray-600 hover:text-gray-900 transition-colors"
@@ -118,7 +105,6 @@ export default function SignUpPage() {
               Back to account type selection
             </button>
 
-            {/* Register Form */}
             <RegisterForm
               userType={selectedUserType!}
               onSwitchToLogin={handleSwitchToLogin}
@@ -126,7 +112,6 @@ export default function SignUpPage() {
           </div>
         )}
 
-        {/* Footer Links */}
         <div className="text-center text-sm text-gray-600 space-y-2">
           <p>
             Need help? <Link href="/help" className="text-primary-600 hover:underline">Contact Support</Link>
@@ -139,5 +124,13 @@ export default function SignUpPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function SignUpPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+      <SignUpContent />
+    </Suspense>
   )
 }
