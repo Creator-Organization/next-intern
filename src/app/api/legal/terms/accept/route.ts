@@ -1,86 +1,155 @@
-// src/app/api/legal/terms/accept/route.ts
-// Terms Acceptance API - NextIntern 2.0
-
-import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
-import { db } from '@/lib/db';
+/**
+ * Terms & Conditions Acceptance API
+ * NextIntern v2 - Fixed import
+ */
+import { NextRequest, NextResponse } from 'next/server'
+import { auth } from '@/lib/auth'
+import { db } from '@/lib/db'  // ← Changed from 'prisma' to 'db'
+import { UserType } from '@prisma/client'
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
-    
+    // Get session
+    const session = await auth()
+
     if (!session?.user?.id) {
-      return NextResponse.json({ 
-        error: 'Unauthorized - Please log in' 
-      }, { status: 401 });
+      return NextResponse.json(
+        { error: 'Unauthorized - Please sign in first' },
+        { status: 401 }
+      )
     }
 
-    const body = await request.json();
-    const { version } = body;
+    const body = await request.json()
+    const { userType, version } = body
+    const userId = session.user.id
 
     console.log('Processing terms acceptance:', {
-      userId: session.user.id,
-      userType: session.user.userType,
+      userId,
+      userType,
       version: version || '1.0'
-    });
+    })
 
-    // Get client IP for audit trail
+    // Get client IP
     const clientIP = request.headers.get('x-forwarded-for') || 
-                    request.headers.get('x-real-ip') || 
-                    'unknown';
+                     request.headers.get('x-real-ip') || 
+                     'unknown'
+    const userAgent = request.headers.get('user-agent') || 'unknown'
 
-    // Update user's terms acceptance status
-    await db.user.update({
-      where: { id: session.user.id },
-      data: {
-        currentTermsAccepted: true,
-        termsAcceptedAt: new Date()
+    // Check if already accepted
+    const existingAcceptance = await db.termsAcceptance.findFirst({  // ← Changed to 'db'
+      where: {
+        userId: userId,
+        userType: userType as UserType
       }
-    });
+    })
 
-    // Create terms acceptance record for audit trail
-    const termsAcceptance = await db.termsAcceptance.create({
+    if (existingAcceptance) {
+      console.log('Terms already accepted')
+      
+      // Update user flag anyway
+      await db.user.update({  // ← Changed to 'db'
+        where: { id: userId },
+        data: { 
+          currentTermsAccepted: true,
+          termsAcceptedAt: new Date()
+        }
+      })
+
+      return NextResponse.json({ 
+        success: true,
+        message: 'Terms already accepted'
+      })
+    }
+
+    // Get or create terms version
+    let termsVersion = await db.termsVersion.findFirst({  // ← Changed to 'db'
+      where: {
+        userType: userType as UserType,
+        isActive: true
+      },
+      orderBy: { createdAt: 'desc' }
+    })
+
+    // Create default version if none exists
+    if (!termsVersion) {
+      console.log('Creating default terms version')
+      termsVersion = await db.termsVersion.create({  // ← Changed to 'db'
+        data: {
+          userType: userType as UserType,
+          version: version || '1.0',
+          title: `Terms & Conditions for ${userType}`,
+          content: `Default Terms & Conditions for ${userType}`,
+          isActive: true,
+          createdAt: new Date(),
+          createdBy: 'system',
+          effectiveFrom: new Date()
+        }
+      })
+    }
+
+    // Record acceptance
+    const acceptance = await db.termsAcceptance.create({  // ← Changed to 'db'
       data: {
-        userId: session.user.id,
-        version: version || '1.0',
+        userId: userId,
+        termsVersionId: termsVersion.id,
+        userType: userType as UserType,
+        ipAddress: clientIP,
+        userAgent: userAgent,
         acceptedAt: new Date(),
-        ipAddress: clientIP,
-        userAgent: request.headers.get('user-agent') || 'unknown'
+        isActive: true
       }
-    });
+    })
 
-    // Log privacy audit trail
-    await db.privacyAuditLog.create({
+    console.log('Terms acceptance recorded:', acceptance.id)
+
+    // Update user's flag
+    await db.user.update({  // ← Changed to 'db'
+      where: { id: userId },
+      data: { 
+        currentTermsAccepted: true,
+        termsAcceptedAt: new Date(),
+        updatedAt: new Date()
+      }
+    })
+
+    console.log('User updated successfully')
+
+    // Create audit log
+    await db.privacyAuditLog.create({  // ← Changed to 'db'
       data: {
-        userId: session.user.id,
-        action: 'VIEW_PROFILE', // Use existing enum value
-        targetId: termsAcceptance.id,
+        userId: userId,
+        action: 'TERMS_ACCEPTED',
+        resourceId: acceptance.id,
+        resourceType: 'terms_acceptance',
         ipAddress: clientIP,
-        userAgent: request.headers.get('user-agent') || 'unknown',
-        accessedAt: new Date()
+        userAgent: userAgent,
+        accessedAt: new Date(),
+        isPremiumAccess: false
       }
-    });
+    })
 
-    console.log('Terms acceptance completed successfully:', {
-      userId: session.user.id,
-      acceptanceId: termsAcceptance.id,
-      timestamp: new Date()
-    });
+    console.log('Audit log created')
 
-    return NextResponse.json({
+    return NextResponse.json({ 
       success: true,
       message: 'Terms accepted successfully',
-      acceptanceId: termsAcceptance.id,
-      acceptedAt: termsAcceptance.acceptedAt
-    });
+      acceptanceId: acceptance.id
+    })
 
   } catch (error) {
-    console.error('Terms acceptance API error:', error);
+    console.error('Terms acceptance error:', error)
     
-    return NextResponse.json({
+    if (error instanceof Error) {
+      console.error('Error details:', {
+        name: error.name,
+        message: error.message
+      })
+    }
+
+    return NextResponse.json({ 
       success: false,
-      error: 'Failed to accept terms',
+      error: 'Failed to record terms acceptance',
       details: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 });
+    }, { status: 500 })
   }
 }

@@ -1,8 +1,7 @@
 /**
  * User Registration API Route
- * NextIntern v2 - Updated for 28-Table Schema
+ * NextIntern v2 - Updated with T&C Tracking
  */
-
 import { NextRequest, NextResponse } from 'next/server'
 import { createUserWithProfile } from '@/lib/auth-utils'
 import { UserType } from '@prisma/client'
@@ -10,13 +9,13 @@ import { UserType } from '@prisma/client'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { 
-      email, 
-      password, 
-      userType, 
-      firstName, 
-      lastName, 
-      companyName, 
+    const {
+      email,
+      password,
+      userType,
+      firstName,
+      lastName,
+      companyName,
       industry,
       instituteName,
       instituteType,
@@ -69,7 +68,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Admin registration should be restricted (optional check)
+    // Admin registration should be restricted
     if (userType === UserType.ADMIN) {
       return NextResponse.json(
         { error: 'Admin registration is not allowed through this endpoint' },
@@ -91,11 +90,15 @@ export async function POST(request: NextRequest) {
     })
 
     if (result.success && result.user) {
+      // IMPORTANT: Return hasAcceptedTerms flag
       return NextResponse.json(
-        { 
-          message: 'Account created successfully', 
+        {
+          success: true,
+          message: 'Account created successfully',
           userId: result.user.id,
-          userType: result.user.userType
+          userType: result.user.userType,
+          hasAcceptedTerms: result.user.hasAcceptedTerms || false, // NEW: Include T&C status
+          email: result.user.email
         },
         { status: 201 }
       )
@@ -107,7 +110,7 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     console.error('Registration error:', error)
-    
+
     // Handle specific database errors
     if (error instanceof Error) {
       if (error.message.includes('Unique constraint')) {
@@ -117,7 +120,7 @@ export async function POST(request: NextRequest) {
         )
       }
     }
-    
+
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

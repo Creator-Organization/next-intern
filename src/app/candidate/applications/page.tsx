@@ -1,11 +1,12 @@
 // src/app/candidate/applications/page.tsx
-// Applications Page - NextIntern v2 - Clean & Fixed
+// Applications Page - NextIntern v2 - Fully Optimized ✅
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast'; // ✅ Toast notifications
 import { 
   Briefcase, 
   FileText, 
@@ -18,7 +19,9 @@ import {
   MapPin,
   Eye,
   X,
-  Crown
+  TrendingUp,
+  AlertCircle,
+  Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,6 +33,8 @@ interface Application {
   status: 'PENDING' | 'REVIEWED' | 'SHORTLISTED' | 'REJECTED' | 'INTERVIEW_SCHEDULED' | 'SELECTED' | 'WITHDRAWN';
   appliedAt: Date;
   coverLetter?: string;
+  expectedSalary?: number;
+  canJoinFrom?: Date;
   opportunity: {
     id: string;
     title: string;
@@ -42,6 +47,8 @@ interface Application {
       companyName: string;
       industry: string;
       isVerified: boolean;
+      showCompanyName: boolean;
+      anonymousId: string;
     };
   };
 }
@@ -53,6 +60,9 @@ const ApplicationsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
   const [filter, setFilter] = useState<'all' | 'pending' | 'reviewed' | 'selected' | 'rejected'>('all');
+  
+  // ✅ Prevent duplicate fetches
+  const hasFetchedData = useRef(false);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -64,48 +74,48 @@ const ApplicationsPage = () => {
 
   useEffect(() => {
     const fetchApplications = async () => {
-      if (status !== 'authenticated') return;
+      // Only fetch once when authenticated
+      if (status !== 'authenticated' || hasFetchedData.current) {
+        if (hasFetchedData.current) {
+          console.log('⏭️ Skipping fetch - applications already loaded');
+        }
+        return;
+      }
+
+      hasFetchedData.current = true;
+      setIsLoading(true);
 
       try {
+        console.log('🔄 Fetching applications...');
         const response = await fetch('/api/candidates/applications');
+        
         if (response.ok) {
           const data = await response.json();
           setApplications(data.data || []);
+          console.log('✅ Applications loaded:', data.data?.length || 0);
+          
+          // Show success toast only if there are applications
+          if (data.data && data.data.length > 0) {
+            toast.success(`Loaded ${data.data.length} application${data.data.length > 1 ? 's' : ''}`);
+          }
         } else {
-          // Fallback data
-          setApplications([
-            {
-              id: '1',
-              status: 'INTERVIEW_SCHEDULED',
-              appliedAt: new Date('2025-01-15'),
-              coverLetter: 'I am excited to apply for this position.',
-              opportunity: {
-                id: 'opp1',
-                title: 'Frontend Developer Intern',
-                type: 'INTERNSHIP',
-                workType: 'REMOTE',
-                stipend: 25000,
-                currency: 'INR',
-                duration: 12,
-                industry: {
-                  companyName: 'TechCorp Solutions',
-                  industry: 'Technology',
-                  isVerified: true
-                }
-              }
-            }
-          ]);
+          console.error('❌ Failed to fetch applications');
+          toast.error('Failed to load applications');
+          setApplications([]);
         }
       } catch (error) {
-        console.error('Failed to fetch applications:', error);
+        console.error('❌ Applications fetch error:', error);
+        toast.error('Failed to load applications');
         setApplications([]);
+        // Reset flag on error so user can retry
+        hasFetchedData.current = false;
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchApplications();
-  }, [status]);
+  }, [status]); // Only depend on status
 
   const filteredApplications = applications.filter(app => {
     if (filter === 'all') return true;
@@ -119,21 +129,21 @@ const ApplicationsPage = () => {
   const getStatusInfo = (status: Application['status']) => {
     switch (status) {
       case 'PENDING':
-        return { label: 'Applied', color: 'bg-blue-100 text-blue-800' };
+        return { label: 'Applied', color: 'bg-blue-100 text-blue-800', icon: Clock };
       case 'REVIEWED':
-        return { label: 'Under Review', color: 'bg-yellow-100 text-yellow-800' };
+        return { label: 'Under Review', color: 'bg-yellow-100 text-yellow-800', icon: Eye };
       case 'SHORTLISTED':
-        return { label: 'Shortlisted', color: 'bg-green-100 text-green-800' };
+        return { label: 'Shortlisted', color: 'bg-green-100 text-green-800', icon: TrendingUp };
       case 'INTERVIEW_SCHEDULED':
-        return { label: 'Interview Scheduled', color: 'bg-purple-100 text-purple-800' };
+        return { label: 'Interview Scheduled', color: 'bg-purple-100 text-purple-800', icon: Calendar };
       case 'SELECTED':
-        return { label: 'Selected', color: 'bg-green-100 text-green-800' };
+        return { label: 'Selected', color: 'bg-green-100 text-green-800', icon: CheckCircle };
       case 'REJECTED':
-        return { label: 'Not Selected', color: 'bg-red-100 text-red-800' };
+        return { label: 'Not Selected', color: 'bg-red-100 text-red-800', icon: X };
       case 'WITHDRAWN':
-        return { label: 'Withdrawn', color: 'bg-gray-100 text-gray-800' };
+        return { label: 'Withdrawn', color: 'bg-gray-100 text-gray-800', icon: AlertCircle };
       default:
-        return { label: 'Unknown', color: 'bg-gray-100 text-gray-800' };
+        return { label: 'Unknown', color: 'bg-gray-100 text-gray-800', icon: AlertCircle };
     }
   };
 
@@ -145,14 +155,40 @@ const ApplicationsPage = () => {
     if (diffDays === 0) return 'Today';
     if (diffDays === 1) return '1 day ago';
     if (diffDays < 7) return `${diffDays} days ago`;
-    return `${Math.floor(diffDays / 7)} weeks ago`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+    return `${Math.floor(diffDays / 30)} months ago`;
+  };
+
+  const getCompanyDisplayName = (industry: Application['opportunity']['industry'], isPremium: boolean) => {
+    if (industry.showCompanyName || isPremium) {
+      return industry.companyName;
+    }
+    return `Company #${industry.anonymousId.slice(-3)}`;
+  };
+
+  // ✅ Handle filter change with toast
+  const handleFilterChange = (newFilter: typeof filter) => {
+    setFilter(newFilter);
+    const count = applications.filter(app => {
+      if (newFilter === 'all') return true;
+      if (newFilter === 'pending') return app.status === 'PENDING' || app.status === 'REVIEWED';
+      if (newFilter === 'reviewed') return app.status === 'SHORTLISTED' || app.status === 'INTERVIEW_SCHEDULED';
+      if (newFilter === 'selected') return app.status === 'SELECTED';
+      if (newFilter === 'rejected') return app.status === 'REJECTED' || app.status === 'WITHDRAWN';
+      return true;
+    }).length;
+
+    // Show toast for filter changes (optional - can be removed if too chatty)
+    if (newFilter !== 'all') {
+      toast.success(`Showing ${count} ${newFilter} application${count !== 1 ? 's' : ''}`);
+    }
   };
 
   if (status === 'loading' || isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+          <Loader2 className="animate-spin h-12 w-12 border-primary-600 mx-auto text-primary-600" />
           <p className="mt-4 text-gray-600">Loading your applications...</p>
         </div>
       </div>
@@ -164,6 +200,7 @@ const ApplicationsPage = () => {
   }
 
   const user = session?.user;
+  const isPremium = user?.isPremium || false;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -230,7 +267,7 @@ const ApplicationsPage = () => {
                 </div>
 
                 {/* Filter Tabs */}
-                <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
+                <div className="flex flex-wrap gap-2 bg-gray-100 p-2 rounded-lg">
                   {[
                     { key: 'all', label: 'All', count: applications.length },
                     { key: 'pending', label: 'Pending', count: applications.filter(a => a.status === 'PENDING' || a.status === 'REVIEWED').length },
@@ -240,11 +277,11 @@ const ApplicationsPage = () => {
                   ].map(tab => (
                     <button
                       key={tab.key}
-                      onClick={() => setFilter(tab.key as typeof filter)}
-                      className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                      onClick={() => handleFilterChange(tab.key as typeof filter)}
+                      className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
                         filter === tab.key
-                          ? 'bg-white text-primary-600 shadow-sm'
-                          : 'text-gray-600 hover:text-gray-900'
+                          ? 'bg-white text-primary-600 shadow-md scale-105'
+                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                       }`}
                     >
                       {tab.label} ({tab.count})
@@ -259,24 +296,29 @@ const ApplicationsPage = () => {
               <div className="space-y-4">
                 {filteredApplications.map((application) => {
                   const statusInfo = getStatusInfo(application.status);
+                  const StatusIcon = statusInfo.icon;
+                  const companyName = getCompanyDisplayName(application.opportunity.industry, isPremium);
                   
                   return (
-                    <Card key={application.id} className="hover:shadow-lg transition-shadow">
+                    <Card key={application.id} className="hover:shadow-lg transition-all duration-200 hover:scale-[1.01]">
                       <CardContent className="p-6">
                         <div className="flex justify-between items-start mb-4">
                           <div className="flex-grow">
                             <div className="flex items-center gap-3 mb-2">
-                              <h3 className="text-xl font-bold text-gray-900 font-manrope">
-                                {application.opportunity.title}
-                              </h3>
-                              <span className={`px-2 py-1 text-xs font-medium rounded-full ${statusInfo.color}`}>
+                              <Link href={`/candidate/opportunities/${application.opportunity.id}`}>
+                                <h3 className="text-xl font-bold text-gray-900 font-manrope hover:text-primary-600 transition-colors cursor-pointer">
+                                  {application.opportunity.title}
+                                </h3>
+                              </Link>
+                              <span className={`px-3 py-1 text-xs font-medium rounded-full flex items-center gap-1 ${statusInfo.color}`}>
+                                <StatusIcon className="h-3 w-3" />
                                 {statusInfo.label}
                               </span>
                             </div>
                             
                             <div className="flex items-center text-gray-600 mb-3">
                               <Building className="h-4 w-4 mr-2" />
-                              <span className="font-medium">{application.opportunity.industry.companyName}</span>
+                              <span className="font-medium">{companyName}</span>
                               {application.opportunity.industry.isVerified && (
                                 <CheckCircle className="h-4 w-4 ml-2 text-green-500" />
                               )}
@@ -288,7 +330,11 @@ const ApplicationsPage = () => {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => setSelectedApplication(application)}
+                            onClick={() => {
+                              setSelectedApplication(application);
+                              toast.success('Viewing application details');
+                            }}
+                            className="hover:bg-primary-50"
                           >
                             <Eye className="h-4 w-4 mr-1" />
                             Details
@@ -296,7 +342,7 @@ const ApplicationsPage = () => {
                         </div>
 
                         {/* Key Details */}
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 text-sm text-gray-600">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
                           <div className="flex items-center">
                             <MapPin className="h-4 w-4 mr-2" />
                             <span>{application.opportunity.workType}</span>
@@ -312,7 +358,7 @@ const ApplicationsPage = () => {
                               <span>{application.opportunity.currency}{application.opportunity.stipend.toLocaleString()}/month</span>
                             </div>
                           )}
-                          <div className="flex items-center">
+                          <div className="flex items-center text-gray-500">
                             <Calendar className="h-4 w-4 mr-2" />
                             <span>Applied {getTimeSince(application.appliedAt)}</span>
                           </div>
@@ -345,18 +391,21 @@ const ApplicationsPage = () => {
         </div>
       </div>
 
-      {/* Application Details Modal */}
+      {/* Application Details Modal - Enhanced */}
       {selectedApplication && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom duration-300">
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-gray-900 font-manrope">
                   Application Details
                 </h2>
                 <button
-                  onClick={() => setSelectedApplication(null)}
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                  onClick={() => {
+                    setSelectedApplication(null);
+                    toast.success('Closed application details');
+                  }}
+                  className="text-gray-400 hover:text-gray-600 transition-colors hover:bg-gray-100 rounded-full p-2"
                 >
                   <X className="h-6 w-6" />
                 </button>
@@ -366,39 +415,80 @@ const ApplicationsPage = () => {
                 <div>
                   <h3 className="font-semibold text-gray-900 mb-2">Opportunity</h3>
                   <p className="text-lg font-medium">{selectedApplication.opportunity.title}</p>
-                  <p className="text-gray-600">{selectedApplication.opportunity.industry.companyName}</p>
+                  <p className="text-gray-600">
+                    {getCompanyDisplayName(selectedApplication.opportunity.industry, isPremium)}
+                  </p>
                 </div>
 
                 <div>
                   <h3 className="font-semibold text-gray-900 mb-2">Application Status</h3>
-                  <span className={`px-3 py-1 text-sm font-medium rounded-full ${getStatusInfo(selectedApplication.status).color}`}>
-                    {getStatusInfo(selectedApplication.status).label}
-                  </span>
+                  {(() => {
+                    const statusInfo = getStatusInfo(selectedApplication.status);
+                    const StatusIcon = statusInfo.icon;
+                    return (
+                      <span className={`inline-flex items-center gap-2 px-3 py-1 text-sm font-medium rounded-full ${statusInfo.color}`}>
+                        <StatusIcon className="h-4 w-4" />
+                        {statusInfo.label}
+                      </span>
+                    );
+                  })()}
                 </div>
 
                 <div>
                   <h3 className="font-semibold text-gray-900 mb-2">Applied On</h3>
                   <p className="text-gray-600">
-                    {new Date(selectedApplication.appliedAt).toLocaleDateString()} at{' '}
-                    {new Date(selectedApplication.appliedAt).toLocaleTimeString()}
+                    {new Date(selectedApplication.appliedAt).toLocaleDateString('en-US', {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })} at {new Date(selectedApplication.appliedAt).toLocaleTimeString('en-US', {
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
                   </p>
                 </div>
 
                 {selectedApplication.coverLetter && (
                   <div>
                     <h3 className="font-semibold text-gray-900 mb-2">Cover Letter</h3>
-                    <div className="bg-gray-50 rounded-lg p-4">
-                      <p className="text-gray-700">{selectedApplication.coverLetter}</p>
+                    <div className="bg-gray-50 rounded-lg p-4 max-h-60 overflow-y-auto">
+                      <p className="text-gray-700 whitespace-pre-line">{selectedApplication.coverLetter}</p>
                     </div>
+                  </div>
+                )}
+
+                {selectedApplication.expectedSalary && (
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-2">Expected Salary</h3>
+                    <p className="text-gray-700">
+                      {selectedApplication.opportunity.currency}{selectedApplication.expectedSalary.toLocaleString()}/month
+                    </p>
+                  </div>
+                )}
+
+                {selectedApplication.canJoinFrom && (
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-2">Can Join From</h3>
+                    <p className="text-gray-700">
+                      {new Date(selectedApplication.canJoinFrom).toLocaleDateString('en-US', {
+                        month: 'long',
+                        day: 'numeric',
+                        year: 'numeric'
+                      })}
+                    </p>
                   </div>
                 )}
               </div>
 
-              <div className="flex justify-between items-center pt-6 border-t">
+              <div className="flex justify-between items-center pt-6 border-t mt-6">
                 <Link href={`/candidate/opportunities/${selectedApplication.opportunity.id}`}>
                   <Button variant="secondary">View Opportunity</Button>
                 </Link>
-                <Button onClick={() => setSelectedApplication(null)}>
+                <Button onClick={() => {
+                  setSelectedApplication(null);
+                  toast.success('Closed application details');
+                }}>
                   Close
                 </Button>
               </div>

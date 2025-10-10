@@ -1,125 +1,159 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/components/auth/RegisterForm.tsx
 // Register Form Component - NextIntern v2 - Fixed
 
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { signIn } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { Eye, EyeOff, Loader2, CheckCircle, XCircle } from 'lucide-react'
-import { UserType } from '@prisma/client'
-import { getDashboardUrl } from '@/lib/auth-utils'
+import { useState } from 'react';
+import { signIn } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Eye, EyeOff, Loader2, CheckCircle, XCircle } from 'lucide-react';
+import { UserType } from '@prisma/client';
+import { getDashboardUrl } from '@/lib/auth-utils';
 
 interface RegisterFormProps {
-  userType: UserType
-  onSwitchToLogin?: () => void
+  userType: UserType;
+  onSwitchToLogin?: () => void;
 }
 
 interface CandidateFormData {
-  email: string
-  password: string
-  confirmPassword: string
-  firstName: string
-  lastName: string
-  college?: string
+  email: string;
+  password: string;
+  confirmPassword: string;
+  firstName: string;
+  lastName: string;
+  college?: string;
 }
 
 interface IndustryFormData {
-  email: string
-  password: string
-  confirmPassword: string
-  companyName: string
-  industry?: string
+  email: string;
+  password: string;
+  confirmPassword: string;
+  companyName: string;
+  industry?: string;
 }
 
 interface InstituteFormData {
-  email: string
-  password: string
-  confirmPassword: string
-  instituteName: string
-  instituteType?: string
-  affiliatedUniversity?: string
+  email: string;
+  password: string;
+  confirmPassword: string;
+  instituteName: string;
+  instituteType?: string;
+  affiliatedUniversity?: string;
 }
 
-type RegisterFormData = CandidateFormData | IndustryFormData | InstituteFormData
+type RegisterFormData =
+  | CandidateFormData
+  | IndustryFormData
+  | InstituteFormData;
 
 export function RegisterForm({ userType, onSwitchToLogin }: RegisterFormProps) {
-  const router = useRouter()
+  const router = useRouter();
   const [formData, setFormData] = useState<RegisterFormData>(() => {
     switch (userType) {
       case UserType.CANDIDATE:
-        return { email: '', password: '', confirmPassword: '', firstName: '', lastName: '', college: '' }
+        return {
+          email: '',
+          password: '',
+          confirmPassword: '',
+          firstName: '',
+          lastName: '',
+          college: '',
+        };
       case UserType.INDUSTRY:
-        return { email: '', password: '', confirmPassword: '', companyName: '', industry: '' }
+        return {
+          email: '',
+          password: '',
+          confirmPassword: '',
+          companyName: '',
+          industry: '',
+        };
       case UserType.INSTITUTE:
-        return { email: '', password: '', confirmPassword: '', instituteName: '', instituteType: '', affiliatedUniversity: '' }
+        return {
+          email: '',
+          password: '',
+          confirmPassword: '',
+          instituteName: '',
+          instituteType: '',
+          affiliatedUniversity: '',
+        };
       default:
-        return { email: '', password: '', confirmPassword: '', firstName: '', lastName: '', college: '' }
+        return {
+          email: '',
+          password: '',
+          confirmPassword: '',
+          firstName: '',
+          lastName: '',
+          college: '',
+        };
     }
-  })
-  
-  const [showPassword, setShowPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [emailAvailable, setEmailAvailable] = useState<boolean | null>(null)
-  const [checkingEmail, setCheckingEmail] = useState(false)
+  });
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [emailAvailable, setEmailAvailable] = useState<boolean | null>(null);
+  const [checkingEmail, setCheckingEmail] = useState(false);
 
   // Password validation
   const getPasswordStrength = (password: string) => {
-    if (password.length < 6) return { strength: 'weak', message: 'Too short' }
-    if (password.length < 8) return { strength: 'fair', message: 'Could be longer' }
+    if (password.length < 6) return { strength: 'weak', message: 'Too short' };
+    if (password.length < 8)
+      return { strength: 'fair', message: 'Could be longer' };
     if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
-      return { strength: 'good', message: 'Add numbers and mixed case' }
+      return { strength: 'good', message: 'Add numbers and mixed case' };
     }
-    return { strength: 'strong', message: 'Strong password' }
-  }
+    return { strength: 'strong', message: 'Strong password' };
+  };
 
-  const passwordStrength = getPasswordStrength(formData.password)
-  const passwordsMatch = formData.password === formData.confirmPassword && formData.confirmPassword !== ''
+  const passwordStrength = getPasswordStrength(formData.password);
+  const passwordsMatch =
+    formData.password === formData.confirmPassword &&
+    formData.confirmPassword !== '';
 
   // Email validation
   const checkEmailAvailability = async (email: string) => {
     if (!email || !email.includes('@')) {
-      setEmailAvailable(null)
-      return
+      setEmailAvailable(null);
+      return;
     }
 
-    setCheckingEmail(true)
+    setCheckingEmail(true);
     try {
       const response = await fetch('/api/auth/check-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
-      })
-      
-      const data = await response.json()
-      setEmailAvailable(data.available)
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+      setEmailAvailable(data.available);
     } catch {
-      setEmailAvailable(null)
+      setEmailAvailable(null);
     } finally {
-      setCheckingEmail(false)
+      setCheckingEmail(false);
     }
-  }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError(null)
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
 
     // Validation
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match')
-      setIsLoading(false)
-      return
+      setError('Passwords do not match');
+      setIsLoading(false);
+      return;
     }
 
     if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters')
-      setIsLoading(false)
-      return
+      setError('Password must be at least 6 characters');
+      setIsLoading(false);
+      return;
     }
 
     try {
@@ -127,123 +161,141 @@ export function RegisterForm({ userType, onSwitchToLogin }: RegisterFormProps) {
       let requestData: any = {
         email: formData.email,
         password: formData.password,
-        userType
-      }
+        userType,
+      };
 
       if (userType === UserType.CANDIDATE) {
-        const data = formData as CandidateFormData
+        const data = formData as CandidateFormData;
         requestData = {
           ...requestData,
           firstName: data.firstName,
-          lastName: data.lastName
-        }
+          lastName: data.lastName,
+        };
       } else if (userType === UserType.INDUSTRY) {
-        const data = formData as IndustryFormData
+        const data = formData as IndustryFormData;
         requestData = {
           ...requestData,
           companyName: data.companyName,
-          industry: data.industry
-        }
+          industry: data.industry,
+        };
       } else if (userType === UserType.INSTITUTE) {
-        const data = formData as InstituteFormData
+        const data = formData as InstituteFormData;
         requestData = {
           ...requestData,
           instituteName: data.instituteName,
-          instituteType: data.instituteType
-        }
+          instituteType: data.instituteType,
+        };
       }
 
       // Call registration API
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestData)
-      })
+        body: JSON.stringify(requestData),
+      });
 
-      const data = await response.json()
+      const data = await response.json();
 
-      if (response.ok) {
+      if (response.ok && data.success) {
         // Auto sign in after registration
         const signInResult = await signIn('credentials', {
           email: formData.email,
           password: formData.password,
-          redirect: false
-        })
+          redirect: false,
+        });
 
         if (signInResult?.ok) {
-          // Get dashboard URL based on user type
-          const dashboardUrl = getDashboardUrl(userType)
-          router.push(dashboardUrl)
+          // NEW: Check if user needs to accept T&C
+          if (!data.hasAcceptedTerms) {
+            // Redirect to T&C page based on user type
+            const termsRoute =
+              {
+                [UserType.CANDIDATE]: '/legal/terms/candidate',
+                [UserType.INDUSTRY]: '/legal/terms/industry',
+                [UserType.INSTITUTE]: '/legal/terms/institute',
+                [UserType.ADMIN]: '/legal/terms/admin',
+              }[userType] || '/legal/terms/candidate';
+
+            router.push(termsRoute);
+          } else {
+            // If somehow already accepted, go to dashboard
+            const dashboardUrl = getDashboardUrl(userType);
+            router.push(dashboardUrl);
+          }
         } else {
           // Registration succeeded but auto-login failed, redirect to login
-          router.push(`/auth/signin?email=${encodeURIComponent(formData.email)}`)
+          router.push(
+            `/auth/signin?email=${encodeURIComponent(formData.email)}`
+          );
         }
       } else {
-        setError(data.error || 'Registration failed')
+        setError(data.error || 'Registration failed');
       }
-    } catch {
-      setError('An error occurred. Please try again.')
+    } catch (err) {
+      console.error('Registration error:', err);
+      setError('An error occurred. Please try again.');
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleGoogleSignIn = async () => {
-    setIsLoading(true)
+    setIsLoading(true);
     try {
-      const callbackUrl = getDashboardUrl(userType)
-      await signIn('google', { callbackUrl })
+      const callbackUrl = getDashboardUrl(userType);
+      await signIn('google', { callbackUrl });
     } catch {
-      setError('Google sign-in failed')
-      setIsLoading(false)
+      setError('Google sign-in failed');
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
-    if (error) setError(null)
-    
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    if (error) setError(null);
+
     // Check email availability when email changes
     if (field === 'email') {
-      const timeoutId = setTimeout(() => checkEmailAvailability(value), 500)
-      return () => clearTimeout(timeoutId)
+      const timeoutId = setTimeout(() => checkEmailAvailability(value), 500);
+      return () => clearTimeout(timeoutId);
     }
-  }
+  };
 
   // Form validation based on user type
   const isFormValid = () => {
-    const baseValid = formData.email && formData.password && passwordsMatch && emailAvailable
+    const baseValid =
+      formData.email && formData.password && passwordsMatch && emailAvailable;
 
-    if (!baseValid) return false
+    if (!baseValid) return false;
 
     switch (userType) {
       case UserType.CANDIDATE:
-        const candidateData = formData as CandidateFormData
-        return candidateData.firstName && candidateData.lastName
+        const candidateData = formData as CandidateFormData;
+        return candidateData.firstName && candidateData.lastName;
       case UserType.INDUSTRY:
-        const industryData = formData as IndustryFormData
-        return industryData.companyName
+        const industryData = formData as IndustryFormData;
+        return industryData.companyName;
       case UserType.INSTITUTE:
-        const instituteData = formData as InstituteFormData
-        return instituteData.instituteName
+        const instituteData = formData as InstituteFormData;
+        return instituteData.instituteName;
       default:
-        return true
+        return true;
     }
-  }
+  };
 
   // Get user type display name
   const getUserTypeLabel = () => {
     switch (userType) {
       case UserType.CANDIDATE:
-        return 'Candidate'
+        return 'Candidate';
       case UserType.INDUSTRY:
-        return 'Company'
+        return 'Company';
       case UserType.INSTITUTE:
-        return 'Institute'
+        return 'Institute';
       default:
-        return 'User'
+        return 'User';
     }
-  }
+  };
 
   return (
     <Card className="w-full max-w-md">
@@ -251,18 +303,16 @@ export function RegisterForm({ userType, onSwitchToLogin }: RegisterFormProps) {
         <CardTitle className="text-2xl font-bold text-gray-900">
           Create Account
         </CardTitle>
-        <p className="text-gray-600">
-          Join as a {getUserTypeLabel()}
-        </p>
+        <p className="text-gray-600">Join as a {getUserTypeLabel()}</p>
       </CardHeader>
-      
+
       <CardContent className="space-y-4">
         {error && (
-          <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
+          <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-600">
             {error}
           </div>
         )}
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Candidate-specific fields */}
           {userType === UserType.CANDIDATE && (
@@ -293,7 +343,9 @@ export function RegisterForm({ userType, onSwitchToLogin }: RegisterFormProps) {
                 label="Company Name"
                 placeholder="Your Company Name"
                 value={(formData as IndustryFormData).companyName}
-                onChange={(e) => handleInputChange('companyName', e.target.value)}
+                onChange={(e) =>
+                  handleInputChange('companyName', e.target.value)
+                }
                 required
                 disabled={isLoading}
               />
@@ -314,20 +366,37 @@ export function RegisterForm({ userType, onSwitchToLogin }: RegisterFormProps) {
                 label="Institute Name"
                 placeholder="Your Institution Name"
                 value={(formData as InstituteFormData).instituteName}
-                onChange={(e) => handleInputChange('instituteName', e.target.value)}
+                onChange={(e) =>
+                  handleInputChange('instituteName', e.target.value)
+                }
                 required
                 disabled={isLoading}
               />
-              <Input
-                label="Institute Type (Optional)"
-                placeholder="University, College, Technical Institute..."
-                value={(formData as InstituteFormData).instituteType || ''}
-                onChange={(e) => handleInputChange('instituteType', e.target.value)}
-                disabled={isLoading}
-              />
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">
+                  Institute Type (Optional)
+                </label>
+                <select
+                  className="focus:ring-primary-500 w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                  value={(formData as InstituteFormData).instituteType || ''}
+                  onChange={(e) =>
+                    handleInputChange('instituteType', e.target.value)
+                  }
+                  disabled={isLoading}
+                >
+                  <option value="">Select Institute Type</option>
+                  <option value="UNIVERSITY">University</option>
+                  <option value="COLLEGE">College</option>
+                  <option value="TECHNICAL_INSTITUTE">
+                    Technical Institute
+                  </option>
+                  <option value="COMMUNITY_COLLEGE">Community College</option>
+                  <option value="VOCATIONAL_SCHOOL">Vocational School</option>
+                </select>
+              </div>
             </>
           )}
-          
+
           {/* Email with availability check */}
           <div className="relative">
             <Input
@@ -340,21 +409,23 @@ export function RegisterForm({ userType, onSwitchToLogin }: RegisterFormProps) {
               disabled={isLoading}
             />
             {formData.email && (
-              <div className="absolute right-3 top-9">
+              <div className="absolute top-9 right-3">
                 {checkingEmail ? (
-                  <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                  <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
                 ) : emailAvailable === true ? (
-                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  <CheckCircle className="h-4 w-4 text-green-500" />
                 ) : emailAvailable === false ? (
-                  <XCircle className="w-4 h-4 text-red-500" />
+                  <XCircle className="h-4 w-4 text-red-500" />
                 ) : null}
               </div>
             )}
             {emailAvailable === false && (
-              <p className="text-xs text-red-600 mt-1">Email already registered</p>
+              <p className="mt-1 text-xs text-red-600">
+                Email already registered
+              </p>
             )}
           </div>
-          
+
           {/* Password with strength indicator */}
           <div className="relative">
             <Input
@@ -368,64 +439,93 @@ export function RegisterForm({ userType, onSwitchToLogin }: RegisterFormProps) {
             />
             <button
               type="button"
-              className="absolute right-3 top-9 text-gray-400 hover:text-gray-600"
+              className="absolute top-9 right-3 text-gray-400 hover:text-gray-600"
               onClick={() => setShowPassword(!showPassword)}
             >
               {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
             {formData.password && (
               <div className="mt-1 flex items-center gap-2">
-                <div className={`h-1 flex-1 rounded ${
-                  passwordStrength.strength === 'weak' ? 'bg-red-200' :
-                  passwordStrength.strength === 'fair' ? 'bg-yellow-200' :
-                  passwordStrength.strength === 'good' ? 'bg-blue-200' : 'bg-green-200'
-                }`}>
-                  <div className={`h-full rounded transition-all ${
-                    passwordStrength.strength === 'weak' ? 'w-1/4 bg-red-500' :
-                    passwordStrength.strength === 'fair' ? 'w-2/4 bg-yellow-500' :
-                    passwordStrength.strength === 'good' ? 'w-3/4 bg-blue-500' : 'w-full bg-green-500'
-                  }`} />
+                <div
+                  className={`h-1 flex-1 rounded ${
+                    passwordStrength.strength === 'weak'
+                      ? 'bg-red-200'
+                      : passwordStrength.strength === 'fair'
+                        ? 'bg-yellow-200'
+                        : passwordStrength.strength === 'good'
+                          ? 'bg-blue-200'
+                          : 'bg-green-200'
+                  }`}
+                >
+                  <div
+                    className={`h-full rounded transition-all ${
+                      passwordStrength.strength === 'weak'
+                        ? 'w-1/4 bg-red-500'
+                        : passwordStrength.strength === 'fair'
+                          ? 'w-2/4 bg-yellow-500'
+                          : passwordStrength.strength === 'good'
+                            ? 'w-3/4 bg-blue-500'
+                            : 'w-full bg-green-500'
+                    }`}
+                  />
                 </div>
-                <span className={`text-xs ${
-                  passwordStrength.strength === 'weak' ? 'text-red-600' :
-                  passwordStrength.strength === 'fair' ? 'text-yellow-600' :
-                  passwordStrength.strength === 'good' ? 'text-blue-600' : 'text-green-600'
-                }`}>
+                <span
+                  className={`text-xs ${
+                    passwordStrength.strength === 'weak'
+                      ? 'text-red-600'
+                      : passwordStrength.strength === 'fair'
+                        ? 'text-yellow-600'
+                        : passwordStrength.strength === 'good'
+                          ? 'text-blue-600'
+                          : 'text-green-600'
+                  }`}
+                >
                   {passwordStrength.message}
                 </span>
               </div>
             )}
           </div>
-          
+
           <div className="relative">
             <Input
               label="Confirm Password"
               type="password"
               placeholder="Confirm your password"
               value={formData.confirmPassword}
-              onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+              onChange={(e) =>
+                handleInputChange('confirmPassword', e.target.value)
+              }
               required
               disabled={isLoading}
             />
             {formData.confirmPassword && (
-              <div className="absolute right-3 top-9">
+              <div className="absolute top-9 right-3">
                 {passwordsMatch ? (
-                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  <CheckCircle className="h-4 w-4 text-green-500" />
                 ) : (
-                  <XCircle className="w-4 h-4 text-red-500" />
+                  <XCircle className="h-4 w-4 text-red-500" />
                 )}
               </div>
             )}
           </div>
-          
+
           <Button
             type="submit"
-            className="w-full bg-primary-600 hover:bg-primary-700 text-white"
+            className="w-full"
+            style={{
+              backgroundColor: '#0891b2',
+              color: 'white',
+              padding: '0.75rem 1rem',
+              borderRadius: '0.5rem',
+              fontWeight: '500',
+              opacity: isLoading || !isFormValid() ? '0.5' : '1',
+              cursor: isLoading || !isFormValid() ? 'not-allowed' : 'pointer',
+            }}
             disabled={isLoading || !isFormValid()}
           >
             {isLoading ? (
               <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Creating Account...
               </>
             ) : (
@@ -433,16 +533,18 @@ export function RegisterForm({ userType, onSwitchToLogin }: RegisterFormProps) {
             )}
           </Button>
         </form>
-        
+
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-gray-300" />
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-white text-gray-500">Or continue with</span>
+            <span className="bg-white px-2 text-gray-500">
+              Or continue with
+            </span>
           </div>
         </div>
-        
+
         <Button
           type="button"
           variant="secondary"
@@ -450,7 +552,7 @@ export function RegisterForm({ userType, onSwitchToLogin }: RegisterFormProps) {
           onClick={handleGoogleSignIn}
           disabled={isLoading}
         >
-          <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
+          <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24">
             <path
               fill="#4285F4"
               d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -470,7 +572,7 @@ export function RegisterForm({ userType, onSwitchToLogin }: RegisterFormProps) {
           </svg>
           Sign up with Google
         </Button>
-        
+
         {onSwitchToLogin && (
           <p className="text-center text-sm text-gray-600">
             Already have an account?{' '}
@@ -485,5 +587,5 @@ export function RegisterForm({ userType, onSwitchToLogin }: RegisterFormProps) {
         )}
       </CardContent>
     </Card>
-  )
+  );
 }

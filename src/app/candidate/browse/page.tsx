@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import toast from 'react-hot-toast'; // ✅ Add toast import
 import {
   Briefcase,
   Search,
-  Filter,
   MapPin,
   Clock,
   Wallet,
@@ -16,6 +16,7 @@ import {
   Crown,
   EyeOff,
   Check,
+  Loader2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -68,7 +69,8 @@ function BrowseContent() {
   const searchParams = useSearchParams();
 
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
   const [typeFilter, setTypeFilter] = useState<string>(
     searchParams.get('type') || 'all'
@@ -76,7 +78,48 @@ function BrowseContent() {
   const [workTypeFilter, setWorkTypeFilter] = useState<string>(
     searchParams.get('workType') || 'all'
   );
-  const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
+
+  const hasFetchedInitial = useRef(false);
+
+  // Add saved opportunities state
+  const [savedOpportunities, setSavedOpportunities] = useState<Set<string>>(
+    new Set()
+  );
+
+  // Load saved opportunities on mount
+  useEffect(() => {
+    const loadSavedOpportunities = async () => {
+      if (!session?.user?.candidate?.id) return;
+
+      try {
+        const response = await fetch(
+          `/api/candidates/${session.user.candidate.id}/saved`
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          const savedIds = new Set<string>(
+            data.data
+              ?.map(
+                (item: {
+                  opportunityId?: string;
+                  opportunity?: { id: string };
+                }) => item.opportunityId || item.opportunity?.id
+              )
+              .filter(Boolean) || []
+          );
+          setSavedOpportunities(savedIds);
+          console.log('✅ Loaded saved opportunities:', savedIds.size);
+        }
+      } catch (error) {
+        console.error('Failed to load saved opportunities:', error);
+      }
+    };
+
+    if (status === 'authenticated' && session?.user?.candidate?.id) {
+      loadSavedOpportunities();
+    }
+  }, [session?.user?.candidate?.id, status]); // Only run when these change
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -86,9 +129,15 @@ function BrowseContent() {
     }
   }, [status, session, router]);
 
+  // Initial load only - fetch once when page first loads
   useEffect(() => {
-    const fetchOpportunities = async () => {
-      if (status !== 'authenticated') return;
+    const fetchInitialData = async () => {
+      if (status !== 'authenticated' || hasFetchedInitial.current) {
+        return;
+      }
+
+      hasFetchedInitial.current = true;
+      setIsInitialLoad(true);
 
       try {
         const params = new URLSearchParams({
@@ -96,36 +145,84 @@ function BrowseContent() {
           isPremium: session?.user?.isPremium ? 'true' : 'false',
         });
 
-        if (searchQuery) params.append('search', searchQuery);
-        if (typeFilter !== 'all') params.append('type', typeFilter);
-        if (workTypeFilter !== 'all') params.append('workType', workTypeFilter);
+        // Only add filters from URL on initial load
+        const urlSearch = searchParams.get('q');
+        const urlType = searchParams.get('type');
+        const urlWorkType = searchParams.get('workType');
 
+        if (urlSearch) params.append('search', urlSearch);
+        if (urlType && urlType !== 'all') params.append('type', urlType);
+        if (urlWorkType && urlWorkType !== 'all')
+          params.append('workType', urlWorkType);
+
+        console.log('🔄 Initial data load...');
         const response = await fetch(`/api/opportunities?${params.toString()}`);
+
         if (response.ok) {
           const data = await response.json();
           setOpportunities(data.data || []);
+          console.log('✅ Initial data loaded:', data.data?.length || 0);
+        } else {
+          toast.error('Failed to load opportunities');
         }
       } catch (error) {
-        console.error('Failed to fetch opportunities:', error);
+        console.error('❌ Failed to fetch opportunities:', error);
+        toast.error('Failed to load opportunities');
       } finally {
-        setIsLoading(false);
+        setIsInitialLoad(false);
       }
     };
 
-    fetchOpportunities();
-  }, [status, session, searchQuery, typeFilter, workTypeFilter]);
+    fetchInitialData();
+  }, [status, session, searchParams]);
 
-  const handleSearch = (e: React.FormEvent) => {
+  // Manual search function - only called when Search button is clicked
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    const params = new URLSearchParams();
-    if (searchQuery) params.set('q', searchQuery);
-    if (typeFilter !== 'all') params.set('type', typeFilter);
-    if (workTypeFilter !== 'all') params.set('workType', workTypeFilter);
 
-    const newUrl = params.toString()
-      ? `/candidate/browse?${params.toString()}`
-      : '/candidate/browse';
-    router.push(newUrl, { scroll: false });
+    setIsLoading(true);
+
+    try {
+      const params = new URLSearchParams({
+        userType: 'CANDIDATE',
+        isPremium: session?.user?.isPremium ? 'true' : 'false',
+      });
+
+      if (searchQuery) params.append('search', searchQuery);
+      if (typeFilter !== 'all') params.append('type', typeFilter);
+      if (workTypeFilter !== 'all') params.append('workType', workTypeFilter);
+
+      console.log('🔍 Manual search triggered...');
+      const response = await fetch(`/api/opportunities?${params.toString()}`);
+
+      if (response.ok) {
+        const data = await response.json();
+        setOpportunities(data.data || []);
+        console.log('✅ Search results loaded:', data.data?.length || 0);
+        
+        // ✅ Show success toast with result count
+        toast.success(`Found ${data.data?.length || 0} opportunities`);
+      } else {
+        toast.error('Search failed. Please try again.');
+      }
+
+      // Update URL without page refresh
+      const urlParams = new URLSearchParams();
+      if (searchQuery) urlParams.set('q', searchQuery);
+      if (typeFilter !== 'all') urlParams.set('type', typeFilter);
+      if (workTypeFilter !== 'all') urlParams.set('workType', workTypeFilter);
+
+      const newUrl = urlParams.toString()
+        ? `/candidate/browse?${urlParams.toString()}`
+        : '/candidate/browse';
+
+      router.push(newUrl, { scroll: false });
+    } catch (error) {
+      console.error('❌ Search failed:', error);
+      toast.error('Search failed. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const getCompanyDisplayName = (
@@ -138,11 +235,116 @@ function BrowseContent() {
     return `Company #${industry.anonymousId.slice(-3)}`;
   };
 
+  // ✅ Fixed save/unsave with toast notifications
   const handleSaveOpportunity = async (opportunityId: string) => {
-    console.log('Save opportunity:', opportunityId);
+    if (!session?.user?.candidate?.id) {
+      toast.error('Please sign in to save opportunities');
+      return;
+    }
+
+    const candidateId = session.user.candidate.id;
+    const isSaved = savedOpportunities.has(opportunityId);
+
+    // Optimistic update
+    setSavedOpportunities((prev) => {
+      const newSet = new Set(prev);
+      if (isSaved) {
+        newSet.delete(opportunityId);
+      } else {
+        newSet.add(opportunityId);
+      }
+      return newSet;
+    });
+
+    try {
+      if (isSaved) {
+        // Unsave
+        const response = await fetch(
+          `/api/candidates/${candidateId}/saved?opportunityId=${opportunityId}`,
+          { method: 'DELETE' }
+        );
+
+        if (response.ok) {
+          toast.success('Removed from saved opportunities');
+          console.log('✅ Opportunity unsaved');
+        } else {
+          // Revert on error
+          setSavedOpportunities((prev) => new Set(prev).add(opportunityId));
+          toast.error('Failed to remove opportunity');
+        }
+      } else {
+        // Save
+        const response = await fetch(`/api/candidates/${candidateId}/saved`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ opportunityId }),
+        });
+
+        if (response.ok) {
+          toast.success('Added to saved opportunities');
+          console.log('✅ Opportunity saved');
+        } else {
+          // Revert on error
+          setSavedOpportunities((prev) => {
+            const newSet = new Set(prev);
+            newSet.delete(opportunityId);
+            return newSet;
+          });
+          toast.error('Failed to save opportunity');
+        }
+      }
+    } catch (error) {
+      console.error('Save/unsave error:', error);
+      // Revert state on error
+      setSavedOpportunities((prev) => {
+        const newSet = new Set(prev);
+        if (isSaved) {
+          newSet.add(opportunityId);
+        } else {
+          newSet.delete(opportunityId);
+        }
+        return newSet;
+      });
+      toast.error('An error occurred');
+    }
   };
 
-  if (status === 'loading' || isLoading) {
+  const handleClearFilters = async () => {
+    setSearchQuery('');
+    setTypeFilter('all');
+    setWorkTypeFilter('all');
+    setIsLoading(true);
+
+    try {
+      const params = new URLSearchParams({
+        userType: 'CANDIDATE',
+        isPremium: session?.user?.isPremium ? 'true' : 'false',
+      });
+
+      console.log('🔄 Clearing filters...');
+      const response = await fetch(`/api/opportunities?${params.toString()}`);
+
+      if (response.ok) {
+        const data = await response.json();
+        setOpportunities(data.data || []);
+        console.log('✅ All opportunities loaded:', data.data?.length || 0);
+        
+        // ✅ Show success toast
+        toast.success('Filters cleared');
+      } else {
+        toast.error('Failed to clear filters');
+      }
+
+      router.push('/candidate/browse');
+    } catch (error) {
+      console.error('❌ Clear filters failed:', error);
+      toast.error('Failed to clear filters');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (status === 'loading' || isInitialLoad) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
         <div className="text-center">
@@ -191,6 +393,7 @@ function BrowseContent() {
           </p>
         </div>
 
+        {/* Search and Filter Card */}
         <Card className="mb-8">
           <CardContent className="p-6">
             <form onSubmit={handleSearch} className="space-y-4">
@@ -204,12 +407,22 @@ function BrowseContent() {
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="pl-10"
+                      disabled={isLoading}
                     />
                   </div>
                 </div>
-                <Button type="submit">
-                  <Search className="mr-2 h-4 w-4" />
-                  Search
+                <Button type="submit" disabled={isLoading}>
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Searching...
+                    </>
+                  ) : (
+                    <>
+                      <Search className="mr-2 h-4 w-4" />
+                      Search
+                    </>
+                  )}
                 </Button>
               </div>
 
@@ -217,7 +430,8 @@ function BrowseContent() {
                 <select
                   value={typeFilter}
                   onChange={(e) => setTypeFilter(e.target.value)}
-                  className="focus:ring-primary-500 rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:outline-none"
+                  disabled={isLoading}
+                  className="focus:ring-primary-500 rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:outline-none disabled:opacity-50"
                 >
                   <option value="all">All Types</option>
                   <option value="INTERNSHIP">Internships</option>
@@ -230,19 +444,39 @@ function BrowseContent() {
                 <select
                   value={workTypeFilter}
                   onChange={(e) => setWorkTypeFilter(e.target.value)}
-                  className="focus:ring-primary-500 rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:outline-none"
+                  disabled={isLoading}
+                  className="focus:ring-primary-500 rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:outline-none disabled:opacity-50"
                 >
                   <option value="all">All Work Types</option>
                   <option value="REMOTE">Remote</option>
                   <option value="ONSITE">On-site</option>
                   <option value="HYBRID">Hybrid</option>
                 </select>
+
+                {(searchQuery ||
+                  typeFilter !== 'all' ||
+                  workTypeFilter !== 'all') && (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={handleClearFilters}
+                    disabled={isLoading}
+                  >
+                    Clear Filters
+                  </Button>
+                )}
               </div>
             </form>
           </CardContent>
         </Card>
 
-        {opportunities.length > 0 ? (
+        {/* Results */}
+        {isLoading ? (
+          <div className="flex items-center justify-center py-16">
+            <Loader2 className="text-primary-600 h-8 w-8 animate-spin" />
+            <span className="ml-3 text-gray-600">Loading results...</span>
+          </div>
+        ) : opportunities.length > 0 ? (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-semibold text-gray-900">
@@ -258,6 +492,7 @@ function BrowseContent() {
                 );
                 const canApply =
                   isPremium || opportunity.type !== 'FREELANCING';
+                const isSaved = savedOpportunities.has(opportunity.id);
 
                 return (
                   <Card
@@ -278,6 +513,17 @@ function BrowseContent() {
                             {opportunity.isPremiumOnly && (
                               <Crown className="h-5 w-5 text-yellow-500" />
                             )}
+                            <span
+                              className={`rounded-full px-2 py-1 text-xs font-medium ${
+                                opportunity.type === 'INTERNSHIP'
+                                  ? 'bg-blue-100 text-blue-700'
+                                  : opportunity.type === 'PROJECT'
+                                    ? 'bg-green-100 text-green-700'
+                                    : 'bg-yellow-100 text-yellow-700'
+                              }`}
+                            >
+                              {opportunity.type}
+                            </span>
                           </div>
 
                           <div className="mb-3 flex items-center text-gray-600">
@@ -302,8 +548,20 @@ function BrowseContent() {
                             onClick={() =>
                               handleSaveOpportunity(opportunity.id)
                             }
+                            className="hover:bg-primary-50"
+                            title={
+                              isSaved
+                                ? 'Remove from saved'
+                                : 'Save opportunity'
+                            }
                           >
-                            <Bookmark className="h-4 w-4" />
+                            <Bookmark
+                              className={`h-4 w-4 transition-all ${
+                                isSaved
+                                  ? 'text-primary-600 fill-current'
+                                  : 'text-gray-400'
+                              }`}
+                            />
                           </Button>
                           <Link
                             href={`/candidate/opportunities/${opportunity.id}`}
@@ -392,14 +650,7 @@ function BrowseContent() {
               <p className="mb-6 text-gray-600">
                 Try adjusting your search criteria or browse all opportunities.
               </p>
-              <Button
-                onClick={() => {
-                  setSearchQuery('');
-                  setTypeFilter('all');
-                  setWorkTypeFilter('all');
-                  router.push('/candidate/browse');
-                }}
-              >
+              <Button onClick={handleClearFilters} disabled={isLoading}>
                 Clear Filters
               </Button>
             </CardContent>
@@ -412,7 +663,16 @@ function BrowseContent() {
 
 export default function BrowsePage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+          <div className="text-center">
+            <div className="border-primary-600 mx-auto h-12 w-12 animate-spin rounded-full border-b-2"></div>
+            <p className="mt-4 text-gray-600">Loading...</p>
+          </div>
+        </div>
+      }
+    >
       <BrowseContent />
     </Suspense>
   );
