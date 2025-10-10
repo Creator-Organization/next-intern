@@ -149,6 +149,7 @@ enum AuditAction {
   VIEW_OPPORTUNITY
   SEND_MESSAGE
   ACCESS_PREMIUM_FEATURE
+  TERMS_ACCEPTED  // ← ADD THIS LINE
 }
 
 // ============================================================================
@@ -916,10 +917,10 @@ model TermsVersion {
   userType    UserType   @map("user_type")
   version     String     // e.g., "1.0", "1.1", "2.0"
   title       String
-  content     String     // Full terms and conditions text
+  content     String     @map("content")// Full terms and conditions text
   
   // Version Control
-  isActive    Boolean    @default(false) @map("is_active")
+  isActive    Boolean    @default(true) @map("is_active")
   isCurrent   Boolean    @default(false) @map("is_current")
   
   // Effective Dates
@@ -949,6 +950,7 @@ model TermsAcceptance {
   id              String       @id @default(cuid())
   userId          String       @map("user_id")
   termsVersionId  String       @map("terms_version_id")
+  userType        UserType     @map("user_type")
   
   // Acceptance Details
   acceptedAt      DateTime     @default(now()) @map("accepted_at")

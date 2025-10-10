@@ -6,6 +6,7 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast'; // ✅ Add toast import
 import {
   Bookmark,
   BookmarkX,
@@ -109,18 +110,34 @@ const SavedPage = () => {
   }, [status]);
 
   const handleUnsave = async (opportunityId: string) => {
+    if (!session?.user?.candidate?.id) {
+      console.error('No candidate ID found');
+      return;
+    }
+
     try {
-      const response = await fetch(`/api/candidates/saved/${opportunityId}`, {
-        method: 'DELETE',
-      });
+      const candidateId = session.user.candidate.id;
+      const response = await fetch(
+        `/api/candidates/${candidateId}/saved?opportunityId=${opportunityId}`,
+        { method: 'DELETE' }
+      );
 
       if (response.ok) {
+        // Remove from local state immediately for better UX
+        toast.success('Removed From Saved Succesfully');
+          console.log('✅ Opportunity Unsaved');
         setSavedOpportunities((prev) =>
           prev.filter((saved) => saved.opportunity.id !== opportunityId)
         );
+        console.log('✅ Opportunity unsaved successfully');
+      } else {
+        const errorData = await response.json();
+        console.error('Failed to unsave:', errorData);
+        alert('Failed to remove opportunity from saved list');
       }
     } catch (error) {
-      console.error('Failed to unsave opportunity:', error);
+      console.error('Error unsaving opportunity:', error);
+      alert('An error occurred while removing the opportunity');
     }
   };
 

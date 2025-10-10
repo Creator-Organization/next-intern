@@ -12,22 +12,69 @@ export async function GET(request: NextRequest) {
     const userType = searchParams.get('userType');
     const isPremium = searchParams.get('isPremium') === 'true';
     const recommended = searchParams.get('recommended') === 'true';
+    const searchQuery = searchParams.get('search');
+    const typeFilter = searchParams.get('type');
+    const workTypeFilter = searchParams.get('workType');
 
-    console.log('Opportunities API called:', { userType, isPremium, recommended });
+    console.log('Opportunities API called:', { 
+      userType, 
+      isPremium, 
+      recommended, 
+      search: searchQuery,
+      type: typeFilter,
+      workType: workTypeFilter 
+    });
+
+    // Build where clause with all filters
+    const where: any = {
+      isActive: true,
+      // CRITICAL: Institute users cannot see freelancing at all
+      ...(userType === 'INSTITUTE' && {
+        type: { not: 'FREELANCING' }
+      }),
+      // Free users cannot see premium-only opportunities
+      ...(!isPremium && {
+        isPremiumOnly: false
+      })
+    };
+
+    // Add search filter if provided
+    if (searchQuery && searchQuery.trim()) {
+      where.OR = [
+        {
+          title: {
+            contains: searchQuery,
+            mode: 'insensitive', // Case-insensitive search
+          },
+        },
+        {
+          description: {
+            contains: searchQuery,
+            mode: 'insensitive',
+          },
+        },
+        {
+          requirements: {
+            contains: searchQuery,
+            mode: 'insensitive',
+          },
+        },
+      ];
+    }
+
+    // Add type filter if provided
+    if (typeFilter && typeFilter !== 'all') {
+      where.type = typeFilter;
+    }
+
+    // Add work type filter if provided
+    if (workTypeFilter && workTypeFilter !== 'all') {
+      where.workType = workTypeFilter;
+    }
 
     // Get opportunities with privacy filtering
     const opportunities = await db.opportunity.findMany({
-      where: {
-        isActive: true,
-        // CRITICAL: Institute users cannot see freelancing at all
-        ...(userType === 'INSTITUTE' && {
-          type: { not: 'FREELANCING' }
-        }),
-        // Free users cannot see premium-only opportunities
-        ...(!isPremium && {
-          isPremiumOnly: false
-        })
-      },
+      where,
       include: {
         industry: {
           select: {
@@ -87,6 +134,11 @@ export async function GET(request: NextRequest) {
         userType,
         isPremium,
         institutesCanSeeFreelancing: false
+      },
+      filters: {
+        search: searchQuery || null,
+        type: typeFilter || 'all',
+        workType: workTypeFilter || 'all'
       }
     });
 

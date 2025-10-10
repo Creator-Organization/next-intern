@@ -385,7 +385,7 @@ export default async function OpportunityDetailPage({
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="leading-relaxed whitespace-pre-line text-gray-700">
+                <p className="whitespace-pre-line leading-relaxed text-gray-700">
                   {opportunity.description}
                 </p>
               </CardContent>
@@ -397,7 +397,7 @@ export default async function OpportunityDetailPage({
                 <CardTitle>Requirements</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="leading-relaxed whitespace-pre-line text-gray-700">
+                <p className="whitespace-pre-line leading-relaxed text-gray-700">
                   {opportunity.requirements}
                 </p>
                 {opportunity.minQualification && (
@@ -492,7 +492,7 @@ export default async function OpportunityDetailPage({
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="leading-relaxed whitespace-pre-line text-gray-700">
+                    <p className="whitespace-pre-line leading-relaxed text-gray-700">
                       {opportunity.industry.description}
                     </p>
                     <div className="mt-4 flex items-center gap-2 text-sm text-gray-600">
@@ -609,7 +609,7 @@ export default async function OpportunityDetailPage({
                         </div>
                       )}
 
-                      {/* Save Button */}
+                      {/* ✅ Save Button with Toast Support */}
                       <SaveOpportunityButton
                         opportunityId={opportunity.id}
                         candidateId={candidateId}
