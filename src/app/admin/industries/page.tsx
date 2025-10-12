@@ -1,6 +1,8 @@
-import { auth } from '@/lib/auth';
-import { redirect } from 'next/navigation';
-import prisma from '@/lib/db';
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import { 
   Building2,
   CheckCircle,
@@ -9,36 +11,104 @@ import {
   Globe,
   MapPin,
   Users as UsersIcon,
-  AlertTriangle
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+  AlertTriangle,
+  Loader2
+} from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import toast from 'react-hot-toast'
 
-export default async function AdminIndustries() {
-  const session = await auth();
+interface Industry {
+  id: string
+  companyName: string
+  industry: string
+  city: string
+  state: string
+  websiteUrl: string | null
+  description: string | null
+  createdAt: Date
+  verifiedAt: Date | null
+  isVerified: boolean
+  user: {
+    email: string
+  }
+  _count?: {
+    opportunities: number
+  }
+}
 
-  if (!session?.user || session.user.userType !== 'ADMIN') {
-    redirect('/');
+export default function AdminIndustries() {
+  const { data: session, status } = useSession()
+  const router = useRouter()
+  const [pendingIndustries, setPendingIndustries] = useState<Industry[]>([])
+  const [verifiedIndustries, setVerifiedIndustries] = useState<Industry[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [processingId, setProcessingId] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/auth/signin')
+    } else if (session?.user?.userType !== 'ADMIN') {
+      router.push('/')
+    }
+  }, [status, session, router])
+
+  useEffect(() => {
+    if (status === 'authenticated') {
+      fetchIndustries()
+    }
+  }, [status])
+
+  const fetchIndustries = async () => {
+    setIsLoading(true)
+    try {
+      const response = await fetch('/api/admin/industries')
+      if (response.ok) {
+        const data = await response.json()
+        setPendingIndustries(data.pending || [])
+        setVerifiedIndustries(data.verified || [])
+      }
+    } catch (error) {
+      console.error('Failed to fetch industries:', error)
+      toast.error('Failed to load industries')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  // Fetch industries with verification status
-  const pendingIndustries = await prisma.industry.findMany({
-    where: { isVerified: false },
-    include: {
-      user: true
-    },
-    orderBy: { createdAt: 'desc' }
-  });
+  const handleAction = async (industryId: string, action: 'approve' | 'reject' | 'revoke') => {
+    setProcessingId(industryId)
+    try {
+      const response = await fetch('/api/admin/verify/industry', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ industryId, action })
+      })
 
-  const verifiedIndustries = await prisma.industry.findMany({
-    where: { isVerified: true },
-    include: {
-      user: true,
-      opportunities: true
-    },
-    orderBy: { verifiedAt: 'desc' },
-    take: 20
-  });
+      if (response.ok) {
+        const data = await response.json()
+        toast.success(data.message)
+        // Refresh the list
+        await fetchIndustries()
+      } else {
+        const error = await response.json()
+        toast.error(error.error || 'Action failed')
+      }
+    } catch (error) {
+      console.error('Action failed:', error)
+      toast.error('Failed to process action')
+    } finally {
+      setProcessingId(null)
+    }
+  }
+
+  if (status === 'loading' || isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="animate-spin h-12 w-12 text-primary-600" />
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -117,12 +187,24 @@ export default async function AdminIndustries() {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex flex-col gap-2">
-                    <Button className="bg-green-600 hover:bg-green-700">
-                      <CheckCircle className="w-4 h-4 mr-2" />
+                  <div className="flex flex-col gap-2 lg:min-w-[140px]">
+                    <Button 
+                      className="bg-green-600 hover:bg-green-700 text-white"
+                      onClick={() => handleAction(industry.id, 'approve')}
+                      disabled={processingId === industry.id}
+                    >
+                      {processingId === industry.id ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                      )}
                       Approve
                     </Button>
-                    <Button variant="destructive">
+                    <Button 
+                      variant="destructive"
+                      onClick={() => handleAction(industry.id, 'reject')}
+                      disabled={processingId === industry.id}
+                    >
                       <XCircle className="w-4 h-4 mr-2" />
                       Reject
                     </Button>
@@ -170,7 +252,7 @@ export default async function AdminIndustries() {
                       <p>{industry.industry}</p>
                       <p>{industry.city}, {industry.state}</p>
                       <p className="text-xs text-gray-500">
-                        {industry.opportunities.length} opportunities posted
+                        {industry._count?.opportunities || 0} opportunities posted
                       </p>
                       {industry.verifiedAt && (
                         <p className="text-xs text-green-600">
@@ -184,8 +266,18 @@ export default async function AdminIndustries() {
                   <Button variant="secondary" size="sm" className="flex-1">
                     View Details
                   </Button>
-                  <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700 hover:bg-red-50">
-                    Revoke
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    onClick={() => handleAction(industry.id, 'revoke')}
+                    disabled={processingId === industry.id}
+                  >
+                    {processingId === industry.id ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      'Revoke'
+                    )}
                   </Button>
                 </div>
               </Card>
@@ -194,5 +286,5 @@ export default async function AdminIndustries() {
         )}
       </div>
     </div>
-  );
+  )
 }

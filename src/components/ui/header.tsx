@@ -419,7 +419,14 @@ export function Header({ user }: HeaderProps) {
                         <button
                           onClick={async () => {
                             const { signOut } = await import('next-auth/react');
-                            await signOut({ redirect: true, callbackUrl: '/' });
+                            // ✅ Get the base URL dynamically
+                            const baseUrl =
+                              process.env.NEXT_PUBLIC_APP_URL ||
+                              window.location.origin;
+                            await signOut({
+                              redirect: true,
+                              callbackUrl: baseUrl,
+                            });
                           }}
                           className="flex w-full items-center space-x-3 px-4 py-2 text-left text-sm text-red-600 transition-colors hover:bg-red-50"
                         >

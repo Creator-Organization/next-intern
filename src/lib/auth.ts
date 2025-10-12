@@ -135,7 +135,7 @@ export const authConfig: NextAuthConfig = {
 
           // Verify password
           const isValid = await bcrypt.compare(
-            credentials.password as string, 
+            credentials.password as string,
             user.passwordHash
           )
 
@@ -180,8 +180,20 @@ export const authConfig: NextAuthConfig = {
 
   session: {
     strategy: 'jwt',
-    maxAge: 30 * 24 * 60 * 60, // 30 days
-    updateAge: 24 * 60 * 60    // 24 hours
+    maxAge: 30 * 24 * 60 * 60, // ✅ 30 days
+    updateAge: 24 * 60 * 60, // ✅ Update every 24 hours
+  },
+
+  cookies: {
+    sessionToken: {
+      name: `next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production', // ✅ Secure in production
+      },
+    },
   },
 
   callbacks: {
@@ -261,7 +273,7 @@ export const authConfig: NextAuthConfig = {
           if (!existingUser.googleId && profile?.sub) {
             await db.user.update({
               where: { id: existingUser.id },
-              data: { 
+              data: {
                 googleId: profile.sub,
                 lastLoginAt: new Date()
               }
@@ -310,7 +322,7 @@ export const authConfig: NextAuthConfig = {
   events: {
     async signIn({ user, account }) {
       console.log(`User signed in: ${user.email} via ${account?.provider}`)
-      
+
       if (user.id) {
         try {
           await db.user.update({
@@ -322,7 +334,7 @@ export const authConfig: NextAuthConfig = {
         }
       }
     },
-    
+
     async signOut() {
       console.log('User signed out')
     }

@@ -1,7 +1,7 @@
-import { auth } from '@/lib/auth';
-import { redirect } from 'next/navigation';
-import prisma from '@/lib/db';
-import Link from 'next/link';
+import { auth } from '@/lib/auth'
+import { redirect } from 'next/navigation'
+import { db } from '@/lib/db'
+import Link from 'next/link'
 import { 
   Users, 
   Building2, 
@@ -13,16 +13,17 @@ import {
   CheckCircle,
   Clock,
   Shield
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+} from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
 
 export default async function AdminDashboard() {
-  // const session = await auth();
+  // ✅ FIX: Use auth() instead of getServerSession
+  const session = await auth()
 
-  // if (!session?.user || session.user.userType !== 'ADMIN') {
-  //   redirect('/');
-  // }
+  if (!session?.user || session.user.userType !== 'ADMIN') {
+    redirect('/')
+  }
 
   // Fetch platform-wide metrics
   const [
@@ -36,30 +37,30 @@ export default async function AdminDashboard() {
     pendingInstitutes,
     openTickets
   ] = await Promise.all([
-    prisma.user.count(),
-    prisma.candidate.count(),
-    prisma.industry.count(),
-    prisma.institute.count(),
-    prisma.opportunity.count(),
-    prisma.application.count(),
-    prisma.industry.count({ where: { isVerified: false } }),
-    prisma.institute.count({ where: { isVerified: false } }),
-    prisma.supportTicket.count({ where: { status: 'OPEN' } })
-  ]);
+    db.user.count(),
+    db.candidate.count(),
+    db.industry.count(),
+    db.institute.count(),
+    db.opportunity.count(),
+    db.application.count(),
+    db.industry.count({ where: { isVerified: false } }),
+    db.institute.count({ where: { isVerified: false } }),
+    db.supportTicket.count({ where: { status: 'OPEN' } })
+  ])
 
-  const premiumUsers = await prisma.user.count({ where: { isPremium: true } });
-  const activeOpportunities = await prisma.opportunity.count({ where: { isActive: true } });
+  const premiumUsers = await db.user.count({ where: { isPremium: true } })
+  const activeOpportunities = await db.opportunity.count({ where: { isActive: true } })
 
   // Get recent users (last 7 days)
-  const sevenDaysAgo = new Date();
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-  const newUsersThisWeek = await prisma.user.count({
+  const sevenDaysAgo = new Date()
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+  const newUsersThisWeek = await db.user.count({
     where: {
       createdAt: {
         gte: sevenDaysAgo
       }
     }
-  });
+  })
 
   return (
     <div className="space-y-8">
@@ -140,7 +141,7 @@ export default async function AdminDashboard() {
               <p className="text-sm text-gray-600 mb-1">Premium Users</p>
               <p className="text-3xl font-bold text-gray-900">{premiumUsers}</p>
               <p className="text-xs text-gray-500 mt-1">
-                {((premiumUsers / totalUsers) * 100).toFixed(1)}% conversion
+                {totalUsers > 0 ? ((premiumUsers / totalUsers) * 100).toFixed(1) : 0}% conversion
               </p>
             </div>
             <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
@@ -253,5 +254,5 @@ export default async function AdminDashboard() {
         </div>
       </Card>
     </div>
-  );
+  )
 }

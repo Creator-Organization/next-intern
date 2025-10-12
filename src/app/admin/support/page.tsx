@@ -1,66 +1,149 @@
-import { auth } from '@/lib/auth';
-import { redirect } from 'next/navigation';
-import prisma from '@/lib/db';
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import { 
   HelpCircle,
   Clock,
   CheckCircle,
   XCircle,
   AlertCircle,
-  User} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+  User,
+  Loader2,
+  RefreshCw
+} from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import toast from 'react-hot-toast'
 
-export default async function AdminSupport() {
-  const session = await auth();
+interface SupportTicket {
+  id: string
+  subject: string
+  description: string
+  category: string
+  priority: string
+  status: string
+  createdAt: Date
+  updatedAt: Date
+  resolvedAt: Date | null
+  user: {
+    email: string
+  }
+}
 
-  if (!session?.user || session.user.userType !== 'ADMIN') {
-    redirect('/');
+export default function AdminSupport() {
+  const { data: session, status } = useSession()
+  const router = useRouter()
+  const [openTickets, setOpenTickets] = useState<SupportTicket[]>([])
+  const [inProgressTickets, setInProgressTickets] = useState<SupportTicket[]>([])
+  const [resolvedTickets, setResolvedTickets] = useState<SupportTicket[]>([])
+  const [closedTickets, setClosedTickets] = useState<SupportTicket[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [processingId, setProcessingId] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/auth/signin')
+    } else if (session?.user?.userType !== 'ADMIN') {
+      router.push('/')
+    }
+  }, [status, session, router])
+
+  useEffect(() => {
+    if (status === 'authenticated') {
+      fetchTickets()
+    }
+  }, [status])
+
+  const fetchTickets = async (showRefreshToast = false) => {
+    if (showRefreshToast) {
+      setIsRefreshing(true)
+    } else {
+      setIsLoading(true)
+    }
+
+    try {
+      const response = await fetch('/api/admin/support')
+      if (response.ok) {
+        const data = await response.json()
+        setOpenTickets(data.open || [])
+        setInProgressTickets(data.inProgress || [])
+        setResolvedTickets(data.resolved || [])
+        setClosedTickets(data.closed || [])
+        if (showRefreshToast) {
+          toast.success('Refreshed successfully!')
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch tickets:', error)
+      toast.error('Failed to load tickets')
+    } finally {
+      setIsLoading(false)
+      setIsRefreshing(false)
+    }
   }
 
-  // Fetch support tickets by status
-  const openTickets = await prisma.supportTicket.findMany({
-    where: { status: 'OPEN' },
-    include: { user: true },
-    orderBy: { createdAt: 'desc' }
-  });
+  const handleAction = async (ticketId: string, action: 'take_action' | 'resolve' | 'close', response?: string) => {
+    setProcessingId(ticketId)
+    try {
+      const apiResponse = await fetch('/api/admin/support', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ticketId, action, response })
+      })
 
-  const inProgressTickets = await prisma.supportTicket.findMany({
-    where: { status: 'IN_PROGRESS' },
-    include: { user: true },
-    orderBy: { createdAt: 'desc' }
-  });
-
-  const resolvedTickets = await prisma.supportTicket.findMany({
-    where: { status: 'RESOLVED' },
-    include: { user: true },
-    orderBy: { resolvedAt: 'desc' },
-    take: 20
-  });
-
-  const closedTickets = await prisma.supportTicket.findMany({
-    where: { status: 'CLOSED' },
-    include: { user: true },
-    orderBy: { updatedAt: 'desc' },
-    take: 20
-  });
+      if (apiResponse.ok) {
+        const data = await apiResponse.json()
+        toast.success(data.message)
+        await fetchTickets()
+      } else {
+        const error = await apiResponse.json()
+        toast.error(error.error || 'Action failed')
+      }
+    } catch (error) {
+      console.error('Action failed:', error)
+      toast.error('Failed to process action')
+    } finally {
+      setProcessingId(null)
+    }
+  }
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'URGENT': return 'bg-red-100 text-red-800';
-      case 'HIGH': return 'bg-orange-100 text-orange-800';
-      case 'MEDIUM': return 'bg-yellow-100 text-yellow-800';
-      case 'LOW': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'URGENT': return 'bg-red-100 text-red-800'
+      case 'HIGH': return 'bg-orange-100 text-orange-800'
+      case 'MEDIUM': return 'bg-yellow-100 text-yellow-800'
+      case 'LOW': return 'bg-blue-100 text-blue-800'
+      default: return 'bg-gray-100 text-gray-800'
     }
-  };
+  }
+
+  if (status === 'loading' || isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="animate-spin h-12 w-12 text-primary-600" />
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 font-manrope">Support Tickets</h1>
-        <p className="text-gray-600 mt-2">Manage and respond to user support requests</p>
+      {/* Page Header with Refresh */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 font-manrope">Support Tickets</h1>
+          <p className="text-gray-600 mt-2">Manage and respond to user support requests</p>
+        </div>
+        <Button 
+          variant="secondary"
+          onClick={() => fetchTickets(true)}
+          disabled={isRefreshing}
+        >
+          <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+          Refresh
+        </Button>
       </div>
 
       {/* Stats */}
@@ -146,8 +229,15 @@ export default async function AdminSupport() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex flex-col gap-2">
-                    <Button className="bg-blue-600 hover:bg-blue-700">
+                  <div className="flex flex-col gap-2 lg:min-w-[140px]">
+                    <Button 
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                      onClick={() => handleAction(ticket.id, 'take_action')}
+                      disabled={processingId === ticket.id}
+                    >
+                      {processingId === ticket.id ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : null}
                       Take Action
                     </Button>
                     <Button variant="secondary" size="sm">
@@ -193,8 +283,18 @@ export default async function AdminSupport() {
                   <Button variant="secondary" size="sm" className="flex-1">
                     Respond
                   </Button>
-                  <Button variant="ghost" size="sm" className="text-green-600 hover:bg-green-50">
-                    Resolve
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-green-600 hover:bg-green-50"
+                    onClick={() => handleAction(ticket.id, 'resolve')}
+                    disabled={processingId === ticket.id}
+                  >
+                    {processingId === ticket.id ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      'Resolve'
+                    )}
                   </Button>
                 </div>
               </Card>
@@ -232,5 +332,5 @@ export default async function AdminSupport() {
         )}
       </div>
     </div>
-  );
+  )
 }
