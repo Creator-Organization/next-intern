@@ -1,11 +1,11 @@
 // src/app/api/opportunities/route.ts
-// Opportunities API with Privacy Controls - NextIntern 2.0
+// Opportunities API with Privacy Controls + Admin Approval System - NextIntern 2.0
 
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 
-// GET - List opportunities with privacy filtering
+// GET - List opportunities with privacy filtering + APPROVAL FILTER
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -27,11 +27,16 @@ export async function GET(request: NextRequest) {
 
     // Build where clause with all filters
     const where: any = {
+      // ✅ STEP 3 CRITICAL CHANGE: Only show APPROVED opportunities to candidates
+      isApproved: true,
+      approvalStatus: 'APPROVED',
       isActive: true,
+      
       // CRITICAL: Institute users cannot see freelancing at all
       ...(userType === 'INSTITUTE' && {
         type: { not: 'FREELANCING' }
       }),
+      
       // Free users cannot see premium-only opportunities
       ...(!isPremium && {
         isPremiumOnly: false
@@ -44,7 +49,7 @@ export async function GET(request: NextRequest) {
         {
           title: {
             contains: searchQuery,
-            mode: 'insensitive', // Case-insensitive search
+            mode: 'insensitive',
           },
         },
         {
@@ -125,7 +130,7 @@ export async function GET(request: NextRequest) {
       }
     }));
 
-    console.log(`Returning ${processedOpportunities.length} opportunities`);
+    console.log(`Returning ${processedOpportunities.length} APPROVED opportunities`);
 
     return NextResponse.json({
       data: processedOpportunities,
@@ -145,49 +150,16 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Opportunities API error:', error);
     
-    // Return fallback data on error
-    const fallbackOpportunities = [
-      {
-        id: '1',
-        title: 'Frontend Developer Intern',
-        description: 'Join our dynamic team to build cutting-edge web applications using React, TypeScript, and modern development practices.',
-        type: 'INTERNSHIP',
-        workType: 'REMOTE',
-        stipend: 25000,
-        currency: 'INR',
-        duration: 12,
-        locationId: 'loc1',
-        location: { city: 'Mumbai', state: 'Maharashtra', country: 'India' },
-        applicationCount: 45,
-        viewCount: 234,
-        createdAt: new Date('2025-01-15'),
-        industry: {
-          id: 'ind1',
-          companyName: 'Company #123',
-          industry: 'Technology',
-          isVerified: true,
-          showCompanyName: true,
-          anonymousId: 'comp_123'
-        },
-        category: { id: 'cat1', name: 'Software Development', slug: 'software-development', color: '#3B82F6' },
-        skills: [
-          { skillName: 'React', isRequired: true },
-          { skillName: 'TypeScript', isRequired: true }
-        ],
-        isPremiumOnly: false,
-        showCompanyName: true
-      }
-    ];
-
+    // Return empty array on error (don't show fallback data)
     return NextResponse.json({
-      data: fallbackOpportunities,
-      count: fallbackOpportunities.length,
-      fallback: true
-    });
+      data: [],
+      count: 0,
+      error: 'Failed to fetch opportunities'
+    }, { status: 500 });
   }
 }
 
-// POST - Create new opportunity with posting limits
+// POST - Create new opportunity with posting limits + ADMIN APPROVAL
 export async function POST(request: NextRequest) {
   try {
     const session = await auth();
@@ -300,10 +272,10 @@ export async function POST(request: NextRequest) {
 
     // Parse and validate numeric fields
     const parsedStipend = stipend ? parseInt(stipend.toString()) : null;
-    const parsedDuration = duration ? parseInt(duration.toString()) : 1; // Default to 1 if not provided
+    const parsedDuration = duration ? parseInt(duration.toString()) : 1;
     const parsedExperience = experienceRequired ? parseInt(experienceRequired.toString()) : 0;
 
-    // Create opportunity
+    // ✅ STEP 3 CRITICAL CHANGE: Create opportunity with PENDING approval status
     const opportunity = await db.opportunity.create({
       data: {
         industryId,
@@ -316,7 +288,7 @@ export async function POST(request: NextRequest) {
         workType,
         stipend: parsedStipend,
         currency: currency || 'INR',
-        duration: parsedDuration, // Fixed: Now always a number, never null
+        duration: parsedDuration,
         requirements,
         preferredSkills: preferredSkills || null,
         minQualification: minQualification || null,
@@ -324,12 +296,19 @@ export async function POST(request: NextRequest) {
         applicationDeadline: applicationDeadline ? new Date(applicationDeadline) : null,
         startDate: startDate ? new Date(startDate) : null,
         showCompanyName: showCompanyName || false,
-        isPremiumOnly: type === 'FREELANCING', // Freelancing is always premium-only
-        isActive: true
+        isPremiumOnly: type === 'FREELANCING',
+        
+        // ✅ STEP 3: Set approval fields - ALL new opportunities start PENDING
+        isApproved: false,
+        approvalStatus: 'PENDING',
+        isActive: false, // Not active until approved
+        approvedBy: null,
+        approvedAt: null,
+        rejectionReason: null
       }
     });
 
-    // Fetch related data separately since we didn't include them in create
+    // Fetch related data
     const [industry, category, location] = await Promise.all([
       db.industry.findUnique({
         where: { id: industryId },
@@ -345,37 +324,27 @@ export async function POST(request: NextRequest) {
       })
     ]);
 
-    // Update category opportunity count
-    await db.category.update({
-      where: { id: categoryId },
-      data: {
-        opportunityCount: { increment: 1 }
-      }
-    });
-
-    // Update location opportunity count
-    await db.location.update({
-      where: { id: locationId },
-      data: {
-        opportunityCount: { increment: 1 }
-      }
-    });
-
-    console.log('Opportunity created successfully:', {
+    // Update category opportunity count (only for approved opportunities)
+    // NOTE: Don't increment counts until approved
+    
+    console.log('✅ Opportunity submitted for admin approval:', {
       id: opportunity.id,
       title: opportunity.title,
       type: opportunity.type,
+      approvalStatus: opportunity.approvalStatus,
       industryId
     });
 
     return NextResponse.json({
       success: true,
-      message: 'Opportunity posted successfully',
+      message: 'Opportunity submitted for admin approval. You will be notified once it is reviewed.',
       data: {
         id: opportunity.id,
         title: opportunity.title,
         slug: opportunity.slug,
         type: opportunity.type,
+        approvalStatus: opportunity.approvalStatus,
+        isApproved: opportunity.isApproved,
         companyName: industry?.companyName || 'Unknown',
         category: category?.name || 'Unknown',
         location: location ? `${location.city}, ${location.state}` : 'Unknown'

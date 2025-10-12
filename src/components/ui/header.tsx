@@ -7,21 +7,17 @@ import {
   Menu,
   X,
   Search,
-  Bell,
   User,
-  Building,
-  School,
   ChevronDown,
   LogOut,
   Settings,
   Briefcase,
-  Heart,
   FileText,
   HelpCircle,
-  Phone,
   Shield,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 
 interface User {
   id: string;
@@ -84,11 +80,6 @@ export function Header({ user }: HeaderProps) {
     if (user.userType === 'CANDIDATE') {
       return [
         {
-          href: '/candidate',
-          label: 'Dashboard',
-          active: pathname === '/candidate',
-        },
-        {
           href: '/candidate/browse',
           label: 'Browse Opportunities',
           active: pathname.startsWith('/candidate/browse'),
@@ -113,11 +104,6 @@ export function Header({ user }: HeaderProps) {
 
     if (user.userType === 'INDUSTRY') {
       return [
-        {
-          href: '/industry',
-          label: 'Dashboard',
-          active: pathname === '/industry',
-        },
         {
           href: '/industry/post',
           label: 'Post Opportunity',
@@ -144,11 +130,6 @@ export function Header({ user }: HeaderProps) {
     if (user.userType === 'INSTITUTE') {
       return [
         {
-          href: '/institute',
-          label: 'Dashboard',
-          active: pathname === '/institute',
-        },
-        {
           href: '/institute/students',
           label: 'Students',
           active: pathname.startsWith('/institute/students'),
@@ -173,7 +154,6 @@ export function Header({ user }: HeaderProps) {
 
     if (user.userType === 'ADMIN') {
       return [
-        { href: '/admin', label: 'Dashboard', active: pathname === '/admin' },
         {
           href: '/admin/users',
           label: 'Users',
@@ -371,11 +351,8 @@ export function Header({ user }: HeaderProps) {
             {/* User Actions */}
             {user ? (
               <div className="flex items-center space-x-3">
-                {/* Notifications */}
-                <button className="hover:text-primary-600 hover:bg-primary-50 relative rounded-lg p-2 text-gray-400 transition-all">
-                  <Bell className="h-5 w-5" />
-                  <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500"></span>
-                </button>
+                {/* Notification Bell - UPDATED */}
+                <NotificationBell />
 
                 {/* Profile Dropdown */}
                 <div className="relative">
@@ -437,7 +414,6 @@ export function Header({ user }: HeaderProps) {
                         </Link>
                       </div>
 
-                      {/* Sign Out */}
                       {/* Sign Out */}
                       <div className="mt-2 border-t border-gray-100 pt-2">
                         <button

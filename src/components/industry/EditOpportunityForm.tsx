@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Briefcase, DollarSign, FileText, AlertCircle, Trash2 } from 'lucide-react'
+import { Briefcase, DollarSign, FileText, AlertCircle, Trash2, Clock, CheckCircle, XCircle } from 'lucide-react'
 
 interface Category {
   id: string
@@ -37,6 +37,8 @@ interface Opportunity {
   applicationDeadline: Date | null
   startDate: Date | null
   isActive: boolean
+  approvalStatus: string
+  rejectionReason: string | null
 }
 
 interface Props {
@@ -71,13 +73,19 @@ export default function EditOpportunityForm({ opportunity, categories, locations
     startDate: opportunity.startDate 
       ? new Date(opportunity.startDate).toISOString().split('T')[0] 
       : '',
-    isActive: opportunity.isActive
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     setLoading(true)
+
+    // Check if opportunity is already approved
+    if (opportunity.approvalStatus === 'APPROVED') {
+      setError('Cannot edit approved opportunities. Please contact support.')
+      setLoading(false)
+      return
+    }
 
     // Validation
     if (formData.title.length < 10 || formData.title.length > 100) {
@@ -158,9 +166,75 @@ export default function EditOpportunityForm({ opportunity, categories, locations
     )
   }
 
+  const getApprovalStatusCard = () => {
+    if (opportunity.approvalStatus === 'PENDING') {
+      return (
+        <Card className="bg-yellow-50 border-2 border-yellow-300">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <Clock className="h-5 w-5 text-yellow-600 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold text-yellow-900">⏳ Pending Admin Approval</p>
+                <p className="text-xs text-yellow-800 mt-1">
+                  This opportunity is awaiting review by our admin team. You can still edit it before approval.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )
+    }
+
+    if (opportunity.approvalStatus === 'APPROVED') {
+      return (
+        <Card className="bg-green-50 border-2 border-green-300">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold text-green-900">✅ Approved & Live</p>
+                <p className="text-xs text-green-800 mt-1">
+                  This opportunity is live and visible to candidates. Editing is disabled. Contact support to make changes.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )
+    }
+
+    if (opportunity.approvalStatus === 'REJECTED') {
+      return (
+        <Card className="bg-red-50 border-2 border-red-300">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <XCircle className="h-5 w-5 text-red-600 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold text-red-900">❌ Rejected by Admin</p>
+                {opportunity.rejectionReason && (
+                  <p className="text-xs text-red-800 mt-1">
+                    <strong>Reason:</strong> {opportunity.rejectionReason}
+                  </p>
+                )}
+                <p className="text-xs text-red-700 mt-2">
+                  Please fix the issues and resubmit, or delete this and create a new opportunity.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )
+    }
+
+    return null
+  }
+
   return (
     <form onSubmit={handleSubmit}>
       <div className="space-y-6">
+        {/* Approval Status Card */}
+        {getApprovalStatusCard()}
+
         {/* Error Message */}
         {error && (
           <Card className="bg-red-50 border-red-200">
@@ -192,7 +266,8 @@ export default function EditOpportunityForm({ opportunity, categories, locations
                 maxLength={100}
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                disabled={opportunity.approvalStatus === 'APPROVED'}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
               />
               <p className="text-xs text-gray-500 mt-1">{formData.title.length}/100 characters</p>
             </div>
@@ -206,7 +281,8 @@ export default function EditOpportunityForm({ opportunity, categories, locations
                 required
                 value={formData.type}
                 onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                disabled={opportunity.approvalStatus === 'APPROVED'}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
               >
                 <option value="INTERNSHIP">Internship</option>
                 <option value="PROJECT">Project</option>
@@ -223,7 +299,8 @@ export default function EditOpportunityForm({ opportunity, categories, locations
                 required
                 value={formData.workType}
                 onChange={(e) => setFormData({ ...formData, workType: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                disabled={opportunity.approvalStatus === 'APPROVED'}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
               >
                 <option value="REMOTE">Remote</option>
                 <option value="ONSITE">Onsite</option>
@@ -240,7 +317,8 @@ export default function EditOpportunityForm({ opportunity, categories, locations
                 required
                 value={formData.categoryId}
                 onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                disabled={opportunity.approvalStatus === 'APPROVED'}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
               >
                 {categories.map((cat) => (
                   <option key={cat.id} value={cat.id}>{cat.name}</option>
@@ -257,7 +335,8 @@ export default function EditOpportunityForm({ opportunity, categories, locations
                 required
                 value={formData.locationId}
                 onChange={(e) => setFormData({ ...formData, locationId: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                disabled={opportunity.approvalStatus === 'APPROVED'}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
               >
                 {locations.map((loc) => (
                   <option key={loc.id} value={loc.id}>
@@ -265,20 +344,6 @@ export default function EditOpportunityForm({ opportunity, categories, locations
                   </option>
                 ))}
               </select>
-            </div>
-
-            {/* Active Status */}
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="isActive"
-                checked={formData.isActive}
-                onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
-              />
-              <label htmlFor="isActive" className="text-sm text-gray-700">
-                Opportunity is active and accepting applications
-              </label>
             </div>
           </CardContent>
         </Card>
@@ -300,7 +365,8 @@ export default function EditOpportunityForm({ opportunity, categories, locations
                 rows={6}
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none"
+                disabled={opportunity.approvalStatus === 'APPROVED'}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none disabled:bg-gray-100 disabled:cursor-not-allowed"
               />
               <p className="text-xs text-gray-500 mt-1">{formData.description.length}/2000 characters</p>
             </div>
@@ -314,7 +380,8 @@ export default function EditOpportunityForm({ opportunity, categories, locations
                 rows={4}
                 value={formData.requirements}
                 onChange={(e) => setFormData({ ...formData, requirements: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none"
+                disabled={opportunity.approvalStatus === 'APPROVED'}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none disabled:bg-gray-100 disabled:cursor-not-allowed"
               />
             </div>
 
@@ -326,7 +393,8 @@ export default function EditOpportunityForm({ opportunity, categories, locations
                 rows={3}
                 value={formData.preferredSkills}
                 onChange={(e) => setFormData({ ...formData, preferredSkills: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none"
+                disabled={opportunity.approvalStatus === 'APPROVED'}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none disabled:bg-gray-100 disabled:cursor-not-allowed"
               />
             </div>
           </CardContent>
@@ -351,22 +419,24 @@ export default function EditOpportunityForm({ opportunity, categories, locations
                   min="0"
                   value={formData.stipend}
                   onChange={(e) => setFormData({ ...formData, stipend: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                  disabled={opportunity.approvalStatus === 'APPROVED'}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Duration (weeks) *
+                  Duration (months) *
                 </label>
                 <input
                   type="number"
                   required
                   min="1"
-                  max="52"
+                  max="24"
                   value={formData.duration}
                   onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                  disabled={opportunity.approvalStatus === 'APPROVED'}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                 />
               </div>
             </div>
@@ -380,7 +450,8 @@ export default function EditOpportunityForm({ opportunity, categories, locations
                   type="date"
                   value={formData.applicationDeadline}
                   onChange={(e) => setFormData({ ...formData, applicationDeadline: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                  disabled={opportunity.approvalStatus === 'APPROVED'}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                 />
               </div>
 
@@ -392,7 +463,8 @@ export default function EditOpportunityForm({ opportunity, categories, locations
                   type="date"
                   value={formData.startDate}
                   onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                  disabled={opportunity.approvalStatus === 'APPROVED'}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                 />
               </div>
             </div>
@@ -409,13 +481,17 @@ export default function EditOpportunityForm({ opportunity, categories, locations
           >
             Cancel
           </Button>
-          <Button
-            type="submit"
-            disabled={loading}
-            className="bg-gradient-to-r from-teal-600 to-green-600 hover:from-teal-700 hover:to-green-700"
-          >
-            {loading ? 'Updating...' : 'Update Opportunity'}
-          </Button>
+          
+          {opportunity.approvalStatus !== 'APPROVED' && (
+            <Button
+              type="submit"
+              disabled={loading}
+              className="bg-gradient-to-r from-teal-600 to-green-600 hover:from-teal-700 hover:to-green-700"
+            >
+              {loading ? 'Updating...' : 'Update Opportunity'}
+            </Button>
+          )}
+
           <Button
             type="button"
             variant="secondary"
