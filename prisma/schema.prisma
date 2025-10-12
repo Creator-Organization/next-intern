@@ -1,7 +1,3 @@
-// NextIntern 2.0 Database Schema
-// 28 Tables Total - Privacy-Focused Internship Marketplace with Premium Features
-// Migration from 22-table basic platform to advanced architecture
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,9 +7,756 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ============================================================================
-// ENUMS
-// ============================================================================
+model User {
+  id                   String            @id @default(cuid())
+  email                String            @unique
+  passwordHash         String?           @map("password_hash")
+  userType             UserType          @map("user_type")
+  isVerified           Boolean           @default(false) @map("is_verified")
+  isActive             Boolean           @default(true) @map("is_active")
+  isPremium            Boolean           @default(false) @map("is_premium")
+  premiumExpiresAt     DateTime?         @map("premium_expires_at")
+  googleId             String?           @unique @map("google_id")
+  lastLoginAt          DateTime?         @map("last_login_at")
+  loginAttempts        Int               @default(0) @map("login_attempts")
+  lockedUntil          DateTime?         @map("locked_until")
+  verifiedAt           DateTime?         @map("verified_at")
+  currentTermsAccepted Boolean           @default(false) @map("current_terms_accepted")
+  termsAcceptedAt      DateTime?         @map("terms_accepted_at")
+  createdAt            DateTime          @default(now()) @map("created_at")
+  updatedAt            DateTime          @updatedAt @map("updated_at")
+  candidate            Candidate?
+  industry             Industry?
+  institute            Institute?
+  receivedMessages     Message[]         @relation("ReceivedMessages")
+  sentMessages         Message[]         @relation("SentMessages")
+  notifications        Notification[]
+  auditLogs            PrivacyAuditLog[]
+  supportTickets       SupportTicket[]
+  termsAcceptances     TermsAcceptance[]
+  preferences          UserPreference?
+  subscription         UserSubscription?
+
+  @@index([email])
+  @@index([userType])
+  @@index([isPremium])
+  @@index([isActive])
+  @@map("users")
+}
+
+model Candidate {
+  id                 String             @id @default(cuid())
+  userId             String             @unique @map("user_id")
+  firstName          String             @map("first_name")
+  lastName           String             @map("last_name")
+  phone              String?
+  dateOfBirth        DateTime?          @map("date_of_birth")
+  college            String?
+  degree             String?
+  fieldOfStudy       String?            @map("field_of_study")
+  graduationYear     Int?               @map("graduation_year")
+  cgpa               Float?
+  bio                String?
+  resumeUrl          String?            @map("resume_url")
+  portfolioUrl       String?            @map("portfolio_url")
+  linkedinUrl        String?            @map("linkedin_url")
+  githubUrl          String?            @map("github_url")
+  city               String?
+  state              String?
+  country            String?
+  showFullName       Boolean            @default(false) @map("show_full_name")
+  showContact        Boolean            @default(false) @map("show_contact_info")
+  anonymousId        String             @unique @default(cuid()) @map("anonymous_id")
+  instituteId        String?            @map("institute_id")
+  studentId          String?            @map("student_id")
+  profileComplete    Boolean            @default(false) @map("profile_complete")
+  emailVerified      Boolean            @default(false) @map("email_verified")
+  phoneVerified      Boolean            @default(false) @map("phone_verified")
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+  applications       Application[]
+  skills             CandidateSkill[]
+  institute          Institute?         @relation(fields: [instituteId], references: [id])
+  user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  certificates       Certificate[]
+  instituteStudents  InstituteStudent[]
+  interviews         Interview[]
+  savedOpportunities SavedOpportunity[]
+
+  @@index([userId])
+  @@index([instituteId])
+  @@index([anonymousId])
+  @@index([city, state])
+  @@index([graduationYear])
+  @@map("candidates")
+}
+
+model Industry {
+  id                       String        @id @default(cuid())
+  userId                   String        @unique @map("user_id")
+  companyName              String        @map("company_name")
+  industry                 String
+  companySize              CompanySize   @map("company_size")
+  foundedYear              Int?          @map("founded_year")
+  email                    String?
+  phone                    String?
+  websiteUrl               String?       @map("website_url")
+  linkedinUrl              String?       @map("linkedin_url")
+  description              String?
+  logoUrl                  String?       @map("logo_url")
+  address                  String?
+  city                     String
+  state                    String
+  country                  String
+  isVerified               Boolean       @default(false) @map("is_verified")
+  isActive                 Boolean       @default(true) @map("is_active")
+  verifiedAt               DateTime?     @map("verified_at")
+  monthlyPostLimit         Int           @default(3) @map("monthly_post_limit")
+  currentMonthPosts        Int           @default(0) @map("current_month_posts")
+  lastPostLimitReset       DateTime      @default(now()) @map("last_post_limit_reset")
+  canViewCandidateContacts Boolean       @default(false) @map("can_view_candidate_contacts")
+  showCompanyName          Boolean       @default(false) @map("show_company_name")
+  anonymousId              String        @unique @default(cuid()) @map("anonymous_id")
+  createdAt                DateTime      @default(now()) @map("created_at")
+  updatedAt                DateTime      @updatedAt @map("updated_at")
+  applications             Application[]
+  user                     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  interviews               Interview[]
+  opportunities            Opportunity[]
+
+  @@index([userId])
+  @@index([isVerified])
+  @@index([isActive])
+  @@index([city, state])
+  @@index([industry])
+  @@index([anonymousId])
+  @@map("industries")
+}
+
+model Institute {
+  id                  String               @id @default(cuid())
+  userId              String               @unique @map("user_id")
+  instituteName       String               @map("institute_name")
+  instituteType       InstituteType        @map("institute_type")
+  email               String
+  phone               String?
+  websiteUrl          String?              @map("website_url")
+  description         String?
+  logoUrl             String?              @map("logo_url")
+  address             String
+  city                String
+  state               String
+  country             String
+  accreditationNumber String?              @map("accreditation_number")
+  ugcApproved         Boolean              @default(false) @map("ugc_approved")
+  aicteApproved       Boolean              @default(false) @map("aicte_approved")
+  isVerified          Boolean              @default(false) @map("is_verified")
+  isActive            Boolean              @default(true) @map("is_active")
+  verifiedAt          DateTime?            @map("verified_at")
+  totalStudents       Int                  @default(0) @map("total_students")
+  activeStudents      Int                  @default(0) @map("active_students")
+  createdAt           DateTime             @default(now()) @map("created_at")
+  updatedAt           DateTime             @updatedAt @map("updated_at")
+  students            Candidate[]
+  analytics           InstituteAnalytics[]
+  domains             InstituteDomain[]
+  programs            InstituteProgram[]
+  instituteStudents   InstituteStudent[]
+  user                User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isVerified])
+  @@index([isActive])
+  @@index([city, state])
+  @@index([instituteType])
+  @@map("institutes")
+}
+
+model InstituteDomain {
+  id          String    @id @default(cuid())
+  instituteId String    @map("institute_id")
+  domain      String
+  isVerified  Boolean   @default(false) @map("is_verified")
+  verifiedAt  DateTime? @map("verified_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  institute   Institute @relation(fields: [instituteId], references: [id], onDelete: Cascade)
+
+  @@unique([instituteId, domain])
+  @@index([domain])
+  @@index([isVerified])
+  @@map("institute_domains")
+}
+
+model UserSubscription {
+  id                   String             @id @default(cuid())
+  userId               String             @unique @map("user_id")
+  plan                 SubscriptionPlan
+  status               SubscriptionStatus @default(PENDING)
+  priceAmount          Int
+  currency             String             @default("INR")
+  billingCycle         String
+  startDate            DateTime           @map("start_date")
+  endDate              DateTime           @map("end_date")
+  nextBillingDate      DateTime?          @map("next_billing_date")
+  stripeCustomerId     String?            @map("stripe_customer_id")
+  stripeSubscriptionId String?            @map("stripe_subscription_id")
+  createdAt            DateTime           @default(now()) @map("created_at")
+  updatedAt            DateTime           @updatedAt @map("updated_at")
+  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([plan])
+  @@index([endDate])
+  @@map("user_subscriptions")
+}
+
+model UserPreference {
+  id                    String   @id @default(cuid())
+  userId                String   @unique @map("user_id")
+  theme                 String   @default("teal")
+  language              String   @default("en")
+  timezone              String   @default("Asia/Kolkata")
+  emailNotifications    Boolean  @default(true) @map("email_notifications")
+  pushNotifications     Boolean  @default(true) @map("push_notifications")
+  marketingEmails       Boolean  @default(false) @map("marketing_emails")
+  profileVisibility     String   @default("PUBLIC")
+  showContactInfo       Boolean  @default(false) @map("show_contact_info")
+  showSalaryExpectation Boolean  @default(false) @map("show_salary_expectation")
+  autoApplyEnabled      Boolean  @default(false) @map("auto_apply_enabled")
+  jobAlertEnabled       Boolean  @default(true) @map("job_alert_enabled")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([theme])
+  @@map("user_preferences")
+}
+
+// Add these fields to your Opportunity model in schema.prisma
+// Find the Opportunity model and add the approval fields after the existing fields
+
+model Opportunity {
+  id                  String             @id @default(cuid())
+  industryId          String             @map("industry_id")
+  title               String
+  description         String
+  type                OpportunityType    @default(INTERNSHIP)
+  categoryId          String             @map("category_id")
+  locationId          String             @map("location_id")
+  workType            WorkType
+  duration            Int
+  stipend             Int?
+  currency            String             @default("INR")
+  requirements        String
+  minQualification    String?            @map("min_qualification")
+  preferredSkills     String?            @map("preferred_skills")
+  experienceRequired  Int?               @default(0) @map("experience_required")
+  applicationDeadline DateTime?          @map("application_deadline")
+  startDate           DateTime?          @map("start_date")
+  isActive            Boolean            @default(true) @map("is_active")
+  isPremiumOnly       Boolean            @default(false) @map("is_premium_only")
+  showCompanyName     Boolean            @default(false) @map("show_company_name")
+  slug                String             @unique
+  viewCount           Int                @default(0) @map("view_count")
+  applicationCount    Int                @default(0) @map("application_count")
+  createdAt           DateTime           @default(now()) @map("created_at")
+  updatedAt           DateTime           @updatedAt @map("updated_at")
+
+  // ✅ NEW APPROVAL FIELDS - Add these 5 fields
+  isApproved          Boolean            @default(false) @map("is_approved")
+  approvalStatus      String             @default("PENDING") @map("approval_status") // PENDING, APPROVED, REJECTED
+  approvedBy          String?            @map("approved_by") // Admin user ID
+  approvedAt          DateTime?          @map("approved_at")
+  rejectionReason     String?            @map("rejection_reason")
+
+  // Relationships
+  industry            Industry           @relation(fields: [industryId], references: [id], onDelete: Cascade)
+  category            Category           @relation(fields: [categoryId], references: [id])
+  location            Location           @relation(fields: [locationId], references: [id])
+  skills              OpportunitySkill[]
+  applications        Application[]
+  savedBy             SavedOpportunity[]
+  views               OpportunityView[]
+
+  @@map("opportunities")
+  @@index([industryId])
+  @@index([categoryId])
+  @@index([locationId])
+  @@index([type])
+  @@index([workType])
+  @@index([isActive])
+  @@index([isPremiumOnly])
+  @@index([slug])
+  @@index([applicationDeadline])
+  @@index([isApproved])           // ✅ NEW INDEX
+  @@index([approvalStatus])       // ✅ NEW INDEX
+}
+
+model OpportunitySkill {
+  id            String      @id @default(cuid())
+  opportunityId String      @map("opportunity_id")
+  skillName     String      @map("skill_name")
+  isRequired    Boolean     @default(true) @map("is_required")
+  minLevel      SkillLevel? @map("min_level")
+  opportunity   Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+
+  @@unique([opportunityId, skillName])
+  @@index([opportunityId])
+  @@index([skillName])
+  @@map("opportunity_skills")
+}
+
+model Application {
+  id              String            @id @default(cuid())
+  opportunityId   String            @map("opportunity_id")
+  candidateId     String            @map("candidate_id")
+  industryId      String            @map("industry_id")
+  coverLetter     String?           @map("cover_letter")
+  resumeUrl       String?           @map("resume_url")
+  expectedSalary  Int?              @map("expected_salary")
+  canJoinFrom     DateTime?         @map("can_join_from")
+  status          ApplicationStatus @default(PENDING)
+  appliedAt       DateTime          @default(now()) @map("applied_at")
+  reviewedAt      DateTime?         @map("reviewed_at")
+  companyNotes    String?           @map("company_notes")
+  rejectionReason String?           @map("rejection_reason")
+  rating          Int?
+  candidateViewed Boolean           @default(false) @map("candidate_viewed")
+  contactViewed   Boolean           @default(false) @map("contact_viewed")
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @updatedAt @map("updated_at")
+  candidate       Candidate         @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  industry        Industry          @relation(fields: [industryId], references: [id], onDelete: Cascade)
+  opportunity     Opportunity       @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  interviews      Interview[]
+
+  @@unique([opportunityId, candidateId])
+  @@index([opportunityId])
+  @@index([candidateId])
+  @@index([industryId])
+  @@index([status])
+  @@index([appliedAt])
+  @@map("applications")
+}
+
+model SavedOpportunity {
+  id            String      @id @default(cuid())
+  candidateId   String      @map("candidate_id")
+  opportunityId String      @map("opportunity_id")
+  savedAt       DateTime    @default(now()) @map("saved_at")
+  notes         String?
+  candidate     Candidate   @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  opportunity   Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+
+  @@unique([candidateId, opportunityId])
+  @@index([candidateId])
+  @@index([opportunityId])
+  @@index([savedAt])
+  @@map("saved_opportunities")
+}
+
+model CandidateSkill {
+  id                String     @id @default(cuid())
+  candidateId       String     @map("candidate_id")
+  skillName         String     @map("skill_name")
+  proficiency       SkillLevel
+  yearsOfExperience Int?       @map("years_of_experience")
+  certificationUrl  String?    @map("certification_url")
+  isEndorsed        Boolean    @default(false) @map("is_endorsed")
+  candidate         Candidate  @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@unique([candidateId, skillName])
+  @@index([candidateId])
+  @@index([skillName])
+  @@index([proficiency])
+  @@map("candidate_skills")
+}
+
+model OpportunityView {
+  id            String      @id @default(cuid())
+  opportunityId String      @map("opportunity_id")
+  viewerType    String      @map("viewer_type")
+  isPremium     Boolean     @default(false) @map("is_premium")
+  userAgent     String?     @map("user_agent")
+  ipAddress     String?     @map("ip_address")
+  referer       String?
+  viewedAt      DateTime    @default(now()) @map("viewed_at")
+  timeSpent     Int?        @map("time_spent")
+  city          String?
+  country       String?
+  opportunity   Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+
+  @@index([opportunityId])
+  @@index([viewedAt])
+  @@index([viewerType])
+  @@map("opportunity_views")
+}
+
+model InstituteStudent {
+  id          String           @id @default(cuid())
+  instituteId String           @map("institute_id")
+  candidateId String           @map("candidate_id")
+  studentId   String           @map("student_id")
+  programId   String           @map("program_id")
+  semester    Int?
+  year        Int?
+  cgpa        Float?
+  isActive    Boolean          @default(true) @map("is_active")
+  enrolledAt  DateTime         @default(now()) @map("enrolled_at")
+  graduatedAt DateTime?        @map("graduated_at")
+  candidate   Candidate        @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  institute   Institute        @relation(fields: [instituteId], references: [id], onDelete: Cascade)
+  program     InstituteProgram @relation(fields: [programId], references: [id])
+
+  @@unique([instituteId, studentId])
+  @@unique([instituteId, candidateId])
+  @@index([instituteId])
+  @@index([candidateId])
+  @@index([programId])
+  @@index([isActive])
+  @@map("institute_students")
+}
+
+model InstituteAnalytics {
+  id                       String    @id @default(cuid())
+  instituteId              String    @map("institute_id")
+  month                    Int
+  year                     Int
+  totalStudents            Int       @default(0) @map("total_students")
+  activeStudents           Int       @default(0) @map("active_students")
+  registeredStudents       Int       @default(0) @map("registered_students")
+  totalApplications        Int       @default(0) @map("total_applications")
+  successfulPlacements     Int       @default(0) @map("successful_placements")
+  averageStipend           Float?    @map("average_stipend")
+  programsWithRequirements Int       @default(0) @map("programs_with_requirements")
+  completedRequirements    Int       @default(0) @map("completed_requirements")
+  calculatedAt             DateTime  @default(now()) @map("calculated_at")
+  institute                Institute @relation(fields: [instituteId], references: [id], onDelete: Cascade)
+
+  @@unique([instituteId, month, year])
+  @@index([instituteId])
+  @@index([year, month])
+  @@map("institute_analytics")
+}
+
+model InstituteProgram {
+  id                 String             @id @default(cuid())
+  instituteId        String             @map("institute_id")
+  programName        String             @map("program_name")
+  programType        ProgramType        @map("program_type")
+  department         String
+  internshipRequired Boolean            @default(false) @map("internship_required")
+  minimumDuration    Int?               @map("minimum_duration")
+  creditHours        Int?               @map("credit_hours")
+  semester           Int?
+  totalSeats         Int?               @map("total_seats")
+  currentStudents    Int                @default(0) @map("current_students")
+  isActive           Boolean            @default(true) @map("is_active")
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+  institute          Institute          @relation(fields: [instituteId], references: [id], onDelete: Cascade)
+  students           InstituteStudent[]
+
+  @@unique([instituteId, programName])
+  @@index([instituteId])
+  @@index([programType])
+  @@index([internshipRequired])
+  @@index([isActive])
+  @@map("institute_programs")
+}
+
+model Message {
+  id            String    @id @default(cuid())
+  senderId      String    @map("sender_id")
+  receiverId    String    @map("receiver_id")
+  subject       String?
+  content       String
+  attachmentUrl String?   @map("attachment_url")
+  isRead        Boolean   @default(false) @map("is_read")
+  readAt        DateTime? @map("read_at")
+  isBlocked     Boolean   @default(false) @map("is_blocked")
+  reportedAt    DateTime? @map("reported_at")
+  sentAt        DateTime  @default(now()) @map("sent_at")
+  receiver      User      @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  sender        User      @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([sentAt])
+  @@index([isRead])
+  @@map("messages")
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String           @map("user_id")
+  type      NotificationType
+  title     String
+  message   String
+  data      Json?
+  actionUrl String?          @map("action_url")
+  isRead    Boolean          @default(false) @map("is_read")
+  readAt    DateTime?        @map("read_at")
+  createdAt DateTime         @default(now()) @map("created_at")
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([type])
+  @@index([isRead])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+model Interview {
+  id             String            @id @default(cuid())
+  applicationId  String            @map("application_id")
+  industryId     String            @map("industry_id")
+  candidateId    String            @map("candidate_id")
+  title          String
+  description    String?
+  scheduledAt    DateTime          @map("scheduled_at")
+  duration       Int               @default(60)
+  location       String?
+  meetingUrl     String?           @map("meeting_url")
+  type           InterviewType
+  status         InterviewStatus   @default(SCHEDULED)
+  outcome        InterviewOutcome?
+  feedback       String?
+  rating         Int?
+  companyNotes   String?           @map("company_notes")
+  candidateNotes String?           @map("candidate_notes")
+  createdAt      DateTime          @default(now()) @map("created_at")
+  updatedAt      DateTime          @updatedAt @map("updated_at")
+  application    Application       @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  candidate      Candidate         @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  industry       Industry          @relation(fields: [industryId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId])
+  @@index([industryId])
+  @@index([candidateId])
+  @@index([scheduledAt])
+  @@index([status])
+  @@map("interviews")
+}
+
+model SupportTicket {
+  id          String         @id @default(cuid())
+  userId      String         @map("user_id")
+  subject     String
+  description String
+  status      TicketStatus   @default(OPEN)
+  priority    TicketPriority @default(MEDIUM)
+  category    String
+  response    String?
+  resolvedAt  DateTime?      @map("resolved_at")
+  assignedTo  String?        @map("assigned_to")
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([priority])
+  @@index([category])
+  @@index([createdAt])
+  @@map("support_tickets")
+}
+
+model TermsVersion {
+  id            String            @id @default(cuid())
+  userType      UserType          @map("user_type")
+  version       String
+  title         String
+  content       String            @map("content")
+  isActive      Boolean           @default(true) @map("is_active")
+  isCurrent     Boolean           @default(false) @map("is_current")
+  effectiveFrom DateTime          @map("effective_from")
+  effectiveTo   DateTime?         @map("effective_to")
+  createdAt     DateTime          @default(now()) @map("created_at")
+  createdBy     String            @map("created_by")
+  changeLog     String?           @map("change_log")
+  acceptances   TermsAcceptance[]
+
+  @@unique([userType, version])
+  @@index([userType])
+  @@index([isActive])
+  @@index([isCurrent])
+  @@index([effectiveFrom])
+  @@map("terms_versions")
+}
+
+model TermsAcceptance {
+  id               String       @id @default(cuid())
+  userId           String       @map("user_id")
+  termsVersionId   String       @map("terms_version_id")
+  acceptedAt       DateTime     @default(now()) @map("accepted_at")
+  ipAddress        String       @map("ip_address")
+  userAgent        String       @map("user_agent")
+  digitalSignature String?      @map("digital_signature")
+  witnessEmail     String?      @map("witness_email")
+  isActive         Boolean      @default(true) @map("is_active")
+  revokedAt        DateTime?    @map("revoked_at")
+  revokedReason    String?      @map("revoked_reason")
+  userType         UserType     @map("user_type")
+  termsVersion     TermsVersion @relation(fields: [termsVersionId], references: [id])
+  user             User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, termsVersionId])
+  @@index([userId])
+  @@index([termsVersionId])
+  @@index([acceptedAt])
+  @@index([isActive])
+  @@map("terms_acceptances")
+}
+
+model PrivacyAuditLog {
+  id              String      @id @default(cuid())
+  userId          String      @map("user_id")
+  action          AuditAction
+  targetUserId    String?     @map("target_user_id")
+  targetUserType  UserType?   @map("target_user_type")
+  resourceId      String?     @map("resource_id")
+  resourceType    String?     @map("resource_type")
+  accessReason    String?     @map("access_reason")
+  isPremiumAccess Boolean     @default(false) @map("is_premium_access")
+  ipAddress       String      @map("ip_address")
+  userAgent       String      @map("user_agent")
+  sessionId       String?     @map("session_id")
+  accessedAt      DateTime    @default(now()) @map("accessed_at")
+  dataReturned    Json?       @map("data_returned")
+  legalBasis      String?     @map("legal_basis")
+  retentionPeriod Int?        @map("retention_period")
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([targetUserId])
+  @@index([action])
+  @@index([accessedAt])
+  @@index([isPremiumAccess])
+  @@map("privacy_audit_logs")
+}
+
+model Category {
+  id               String        @id @default(cuid())
+  name             String        @unique
+  slug             String        @unique
+  description      String?
+  icon             String?
+  color            String?
+  sortOrder        Int           @default(0) @map("sort_order")
+  metaTitle        String?       @map("meta_title")
+  metaDescription  String?       @map("meta_description")
+  isActive         Boolean       @default(true) @map("is_active")
+  opportunityCount Int           @default(0) @map("opportunity_count")
+  createdAt        DateTime      @default(now()) @map("created_at")
+  updatedAt        DateTime      @updatedAt @map("updated_at")
+  opportunities    Opportunity[]
+
+  @@index([slug])
+  @@index([isActive])
+  @@index([sortOrder])
+  @@map("categories")
+}
+
+model Location {
+  id               String        @id @default(cuid())
+  city             String
+  state            String
+  country          String
+  slug             String        @unique
+  latitude         Float?
+  longitude        Float?
+  timezone         String?       @default("Asia/Kolkata")
+  metaTitle        String?       @map("meta_title")
+  metaDescription  String?       @map("meta_description")
+  isActive         Boolean       @default(true) @map("is_active")
+  opportunityCount Int           @default(0) @map("opportunity_count")
+  candidateCount   Int           @default(0) @map("candidate_count")
+  industryCount    Int           @default(0) @map("industry_count")
+  opportunities    Opportunity[]
+
+  @@unique([city, state, country])
+  @@index([slug])
+  @@index([city, state])
+  @@index([isActive])
+  @@map("locations")
+}
+
+model BlogPost {
+  id              String         @id @default(cuid())
+  title           String
+  slug            String         @unique
+  excerpt         String
+  content         String
+  featuredImage   String?        @map("featured_image")
+  imageAlt        String?        @map("image_alt")
+  metaTitle       String?        @map("meta_title")
+  metaDescription String?        @map("meta_description")
+  status          BlogPostStatus @default(DRAFT)
+  publishedAt     DateTime?      @map("published_at")
+  authorName      String         @map("author_name")
+  authorEmail     String         @map("author_email")
+  authorBio       String?        @map("author_bio")
+  category        String
+  tags            String[]
+  viewCount       Int            @default(0) @map("view_count")
+  likeCount       Int            @default(0) @map("like_count")
+  shareCount      Int            @default(0) @map("share_count")
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+
+  @@index([slug])
+  @@index([status])
+  @@index([publishedAt])
+  @@index([category])
+  @@map("blog_posts")
+}
+
+model Certificate {
+  id            String    @id @default(cuid())
+  candidateId   String    @map("candidate_id")
+  name          String
+  issuer        String
+  issueDate     DateTime? @map("issue_date")
+  expiryDate    DateTime? @map("expiry_date")
+  credentialId  String?   @map("credential_id")
+  credentialUrl String?   @map("credential_url")
+  isVerified    Boolean   @default(false) @map("is_verified")
+  description   String?
+  skills        String[]
+  createdAt     DateTime  @default(now()) @map("created_at")
+  candidate     Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@index([candidateId])
+  @@index([issuer])
+  @@index([isVerified])
+  @@map("certificates")
+}
+
+model SearchQuery {
+  id              String           @id @default(cuid())
+  query           String
+  userType        UserType?        @map("user_type")
+  isPremium       Boolean          @default(false) @map("is_premium")
+  filters         Json?
+  category        String?
+  location        String?
+  workType        WorkType?
+  opportunityType OpportunityType?
+  resultsCount    Int              @map("results_count")
+  clickedResults  Int              @default(0) @map("clicked_results")
+  userIp          String           @map("user_ip")
+  userAgent       String?          @map("user_agent")
+  referer         String?
+  searchedAt      DateTime         @default(now()) @map("searched_at")
+
+  @@index([query])
+  @@index([searchedAt])
+  @@index([userType])
+  @@index([resultsCount])
+  @@map("search_queries")
+}
 
 enum UserType {
   CANDIDATE
@@ -35,11 +778,11 @@ enum WorkType {
 }
 
 enum CompanySize {
-  STARTUP         // 1-10
-  SMALL           // 11-50
-  MEDIUM          // 51-200
-  LARGE           // 201-1000
-  ENTERPRISE      // 1000+
+  STARTUP
+  SMALL
+  MEDIUM
+  LARGE
+  ENTERPRISE
 }
 
 enum ApplicationStatus {
@@ -149,1057 +892,5 @@ enum AuditAction {
   VIEW_OPPORTUNITY
   SEND_MESSAGE
   ACCESS_PREMIUM_FEATURE
-  TERMS_ACCEPTED  // ← ADD THIS LINE
-}
-
-// ============================================================================
-// CORE USER MANAGEMENT (7 TABLES)
-// ============================================================================
-
-// Table 1: Users - Master Authentication with Premium Flags
-model User {
-  id              String   @id @default(cuid())
-  email           String   @unique
-  passwordHash    String?  @map("password_hash")
-  userType        UserType @map("user_type")
-  isVerified      Boolean  @default(false) @map("is_verified")
-  isActive        Boolean  @default(true) @map("is_active")
-  isPremium       Boolean  @default(false) @map("is_premium")
-  premiumExpiresAt DateTime? @map("premium_expires_at")
-  
-  // OAuth fields
-  googleId        String?  @unique @map("google_id")
-  
-  // Security fields
-  lastLoginAt     DateTime? @map("last_login_at")
-  loginAttempts   Int      @default(0) @map("login_attempts")
-  lockedUntil     DateTime? @map("locked_until")
-  verifiedAt      DateTime? @map("verified_at")
-  
-  // Terms acceptance tracking
-  currentTermsAccepted Boolean @default(false) @map("current_terms_accepted")
-  termsAcceptedAt     DateTime? @map("terms_accepted_at")
-  
-  // Audit timestamps
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
-
-  // Relationships
-  candidate         Candidate?
-  industry          Industry?
-  institute         Institute?
-  preferences       UserPreference?
-  subscription      UserSubscription?
-  sentMessages      Message[] @relation("SentMessages")
-  receivedMessages  Message[] @relation("ReceivedMessages")
-  notifications     Notification[]
-  supportTickets    SupportTicket[]
-  termsAcceptances  TermsAcceptance[]
-  auditLogs         PrivacyAuditLog[]
-
-  @@map("users")
-  @@index([email])
-  @@index([userType])
-  @@index([isPremium])
-  @@index([isActive])
-}
-
-// Table 2: Candidates - Student/Freelancer Profiles
-model Candidate {
-  id              String   @id @default(cuid())
-  userId          String   @unique @map("user_id")
-  firstName       String   @map("first_name")
-  lastName        String   @map("last_name")
-  phone           String?
-  dateOfBirth     DateTime? @map("date_of_birth")
-  
-  // Academic Information
-  college         String?
-  degree          String?
-  fieldOfStudy    String? @map("field_of_study")
-  graduationYear  Int? @map("graduation_year")
-  cgpa            Float?
-  
-  // Professional Information
-  bio             String?
-  resumeUrl       String? @map("resume_url")
-  portfolioUrl    String? @map("portfolio_url")
-  linkedinUrl     String? @map("linkedin_url")
-  githubUrl       String? @map("github_url")
-  
-  // Location
-  city            String?
-  state           String?
-  country         String?
-  
-  // Privacy & Display Controls
-  showFullName    Boolean @default(false) @map("show_full_name")
-  showContact     Boolean @default(false) @map("show_contact_info")
-  anonymousId     String  @unique @default(cuid()) @map("anonymous_id") // For "Candidate #123" display
-  
-  // Institute Connection
-  instituteId     String? @map("institute_id")
-  studentId       String? @map("student_id") // College roll number
-  
-  // Profile completion and verification
-  profileComplete Boolean @default(false) @map("profile_complete")
-  emailVerified   Boolean @default(false) @map("email_verified")
-  phoneVerified   Boolean @default(false) @map("phone_verified")
-  
-  // Audit timestamps
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
-
-  // Relationships
-  user              User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  institute         Institute? @relation(fields: [instituteId], references: [id])
-  skills            CandidateSkill[]
-  applications      Application[]
-  savedOpportunities SavedOpportunity[]
-  certificates      Certificate[]
-  interviews        Interview[]
-  instituteStudents InstituteStudent[]
-
-  @@map("candidates")
-  @@index([userId])
-  @@index([instituteId])
-  @@index([anonymousId])
-  @@index([city, state])
-  @@index([graduationYear])
-}
-
-// Table 3: Industries - Company Profiles with Posting Limits
-model Industry {
-  id                  String      @id @default(cuid())
-  userId              String      @unique @map("user_id")
-  companyName         String      @map("company_name")
-  industry            String
-  companySize         CompanySize @map("company_size")
-  foundedYear         Int?        @map("founded_year")
-  
-  // Contact Information
-  email               String?
-  phone               String?
-  websiteUrl          String?     @map("website_url")
-  linkedinUrl         String?     @map("linkedin_url")
-  
-  // Company Details
-  description         String?
-  logoUrl             String?     @map("logo_url")
-  address             String?
-  city                String
-  state               String
-  country             String
-  
-  // Verification & Status
-  isVerified          Boolean     @default(false) @map("is_verified")
-  isActive            Boolean     @default(true) @map("is_active")
-  verifiedAt          DateTime?   @map("verified_at")
-  
-  // Premium Features & Limits
-  monthlyPostLimit    Int         @default(3) @map("monthly_post_limit") // Free: 3, Premium: unlimited
-  currentMonthPosts   Int         @default(0) @map("current_month_posts")
-  lastPostLimitReset  DateTime    @default(now()) @map("last_post_limit_reset")
-  canViewCandidateContacts Boolean @default(false) @map("can_view_candidate_contacts")
-  
-  // Privacy Controls
-  showCompanyName     Boolean     @default(false) @map("show_company_name") // Free users see "Company #123"
-  anonymousId         String      @unique @default(cuid()) @map("anonymous_id")
-  
-  // Audit timestamps
-  createdAt           DateTime    @default(now()) @map("created_at")
-  updatedAt           DateTime    @updatedAt @map("updated_at")
-
-  // Relationships
-  user                User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  opportunities       Opportunity[]
-  applications        Application[]
-  interviews          Interview[]
-
-  @@map("industries")
-  @@index([userId])
-  @@index([isVerified])
-  @@index([isActive])
-  @@index([city, state])
-  @@index([industry])
-  @@index([anonymousId])
-}
-
-// Table 4: Institutes - College/University Profiles
-model Institute {
-  id                  String        @id @default(cuid())
-  userId              String        @unique @map("user_id")
-  instituteName       String        @map("institute_name")
-  instituteType       InstituteType @map("institute_type")
-  
-  // Contact Information
-  email               String
-  phone               String?
-  websiteUrl          String?       @map("website_url")
-  
-  // Institute Details
-  description         String?
-  logoUrl             String?       @map("logo_url")
-  address             String
-  city                String
-  state               String
-  country             String
-  
-  // Accreditation & Verification
-  accreditationNumber String?       @map("accreditation_number")
-  ugcApproved         Boolean       @default(false) @map("ugc_approved")
-  aicteApproved       Boolean       @default(false) @map("aicte_approved")
-  isVerified          Boolean       @default(false) @map("is_verified")
-  isActive            Boolean       @default(true) @map("is_active")
-  verifiedAt          DateTime?     @map("verified_at")
-  
-  // Student Management
-  totalStudents       Int           @default(0) @map("total_students")
-  activeStudents      Int           @default(0) @map("active_students")
-  
-  // Audit timestamps
-  createdAt           DateTime      @default(now()) @map("created_at")
-  updatedAt           DateTime      @updatedAt @map("updated_at")
-
-  // Relationships
-  user                User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  domains             InstituteDomain[]
-  students            Candidate[]
-  instituteStudents   InstituteStudent[]
-  programs            InstituteProgram[]
-  analytics           InstituteAnalytics[]
-
-  @@map("institutes")
-  @@index([userId])
-  @@index([isVerified])
-  @@index([isActive])
-  @@index([city, state])
-  @@index([instituteType])
-}
-
-// Table 5: Institute Domains - Verified Email Domains
-model InstituteDomain {
-  id          String    @id @default(cuid())
-  instituteId String    @map("institute_id")
-  domain      String    // e.g., "college.edu", "university.ac.in"
-  isVerified  Boolean   @default(false) @map("is_verified")
-  verifiedAt  DateTime? @map("verified_at")
-  createdAt   DateTime  @default(now()) @map("created_at")
-
-  // Relationships
-  institute   Institute @relation(fields: [instituteId], references: [id], onDelete: Cascade)
-
-  @@map("institute_domains")
-  @@unique([instituteId, domain])
-  @@index([domain])
-  @@index([isVerified])
-}
-
-// Table 6: User Subscriptions - Premium Membership Management
-model UserSubscription {
-  id              String             @id @default(cuid())
-  userId          String             @unique @map("user_id")
-  plan            SubscriptionPlan
-  status          SubscriptionStatus @default(PENDING)
-  
-  // Billing Information
-  priceAmount     Int                // In cents (e.g., 2999 for ₹29.99)
-  currency        String             @default("INR")
-  billingCycle    String             // MONTHLY, YEARLY
-  
-  // Subscription Dates
-  startDate       DateTime           @map("start_date")
-  endDate         DateTime           @map("end_date")
-  nextBillingDate DateTime?          @map("next_billing_date")
-  
-  // Payment Integration
-  stripeCustomerId    String?        @map("stripe_customer_id")
-  stripeSubscriptionId String?       @map("stripe_subscription_id")
-  
-  // Audit timestamps
-  createdAt       DateTime           @default(now()) @map("created_at")
-  updatedAt       DateTime           @updatedAt @map("updated_at")
-
-  // Relationships
-  user            User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("user_subscriptions")
-  @@index([userId])
-  @@index([status])
-  @@index([plan])
-  @@index([endDate])
-}
-
-// Table 7: User Preferences - Themes and Settings
-model UserPreference {
-  id                    String  @id @default(cuid())
-  userId                String  @unique @map("user_id")
-  
-  // UI Preferences
-  theme                 String  @default("teal") // teal, blue, purple
-  language              String  @default("en")
-  timezone              String  @default("Asia/Kolkata")
-  
-  // Notification Preferences
-  emailNotifications    Boolean @default(true) @map("email_notifications")
-  pushNotifications     Boolean @default(true) @map("push_notifications")
-  marketingEmails       Boolean @default(false) @map("marketing_emails")
-  
-  // Privacy Settings
-  profileVisibility     String  @default("PUBLIC") // PUBLIC, PRIVATE, VERIFIED_ONLY
-  showContactInfo       Boolean @default(false) @map("show_contact_info")
-  showSalaryExpectation Boolean @default(false) @map("show_salary_expectation")
-  
-  // Feature Preferences
-  autoApplyEnabled      Boolean @default(false) @map("auto_apply_enabled")
-  jobAlertEnabled       Boolean @default(true) @map("job_alert_enabled")
-  
-  updatedAt             DateTime @updatedAt @map("updated_at")
-
-  // Relationships
-  user                  User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("user_preferences")
-  @@index([userId])
-  @@index([theme])
-}
-
-// ============================================================================
-// OPPORTUNITY MANAGEMENT (6 TABLES)
-// ============================================================================
-
-// Table 8: Opportunities - Jobs/Projects/Freelancing
-model Opportunity {
-  id                  String          @id @default(cuid())
-  industryId          String          @map("industry_id")
-  title               String
-  description         String
-  type                OpportunityType @default(INTERNSHIP)
-  categoryId          String          @map("category_id")
-  locationId          String          @map("location_id")
-  workType            WorkType
-  
-  // Duration & Compensation
-  duration            Int             // In months
-  stipend             Int?            // In INR
-  currency            String          @default("INR")
-  
-  // Requirements
-  requirements        String
-  minQualification    String?         @map("min_qualification")
-  preferredSkills     String?         @map("preferred_skills")
-  experienceRequired  Int?            @default(0) @map("experience_required") // In years
-  
-  // Dates
-  applicationDeadline DateTime?       @map("application_deadline")
-  startDate           DateTime?       @map("start_date")
-  
-  // Status & Visibility
-  isActive            Boolean         @default(true) @map("is_active")
-  isPremiumOnly       Boolean         @default(false) @map("is_premium_only") // Freelancing projects
-  showCompanyName     Boolean         @default(false) @map("show_company_name") // Privacy control
-  
-  // SEO & Analytics
-  slug                String          @unique
-  viewCount           Int             @default(0) @map("view_count")
-  applicationCount    Int             @default(0) @map("application_count")
-  
-  // Audit timestamps
-  createdAt           DateTime        @default(now()) @map("created_at")
-  updatedAt           DateTime        @updatedAt @map("updated_at")
-
-  // Relationships
-  industry            Industry @relation(fields: [industryId], references: [id], onDelete: Cascade)
-  category            Category @relation(fields: [categoryId], references: [id])
-  location            Location @relation(fields: [locationId], references: [id])
-  skills              OpportunitySkill[]
-  applications        Application[]
-  savedBy             SavedOpportunity[]
-  views               OpportunityView[]
-
-  @@map("opportunities")
-  @@index([industryId])
-  @@index([categoryId])
-  @@index([locationId])
-  @@index([type])
-  @@index([workType])
-  @@index([isActive])
-  @@index([isPremiumOnly])
-  @@index([slug])
-  @@index([applicationDeadline])
-}
-
-// Table 9: Opportunity Skills - Required Skills per Opportunity
-model OpportunitySkill {
-  id            String @id @default(cuid())
-  opportunityId String @map("opportunity_id")
-  skillName     String @map("skill_name")
-  isRequired    Boolean @default(true) @map("is_required")
-  minLevel      SkillLevel? @map("min_level")
-
-  // Relationships
-  opportunity   Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
-
-  @@map("opportunity_skills")
-  @@unique([opportunityId, skillName])
-  @@index([opportunityId])
-  @@index([skillName])
-}
-
-// Table 10: Applications - Candidate Applications with Privacy Controls
-model Application {
-  id              String            @id @default(cuid())
-  opportunityId   String            @map("opportunity_id")
-  candidateId     String            @map("candidate_id")
-  industryId      String            @map("industry_id")
-  
-  // Application Data
-  coverLetter     String?           @map("cover_letter")
-  resumeUrl       String?           @map("resume_url")
-  expectedSalary  Int?              @map("expected_salary")
-  canJoinFrom     DateTime?         @map("can_join_from")
-  
-  // Status Tracking
-  status          ApplicationStatus @default(PENDING)
-  appliedAt       DateTime          @default(now()) @map("applied_at")
-  reviewedAt      DateTime?         @map("reviewed_at")
-  
-  // Company Notes & Feedback
-  companyNotes    String?           @map("company_notes")
-  rejectionReason String?           @map("rejection_reason")
-  rating          Int?              // 1-5 stars from company
-  
-  // Privacy Controls
-  candidateViewed Boolean           @default(false) @map("candidate_viewed") // Did company view full profile?
-  contactViewed   Boolean           @default(false) @map("contact_viewed")   // Did company access contact info?
-  
-  // Audit timestamps
-  createdAt       DateTime          @default(now()) @map("created_at")
-  updatedAt       DateTime          @updatedAt @map("updated_at")
-
-  // Relationships
-  opportunity     Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
-  candidate       Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
-  industry        Industry @relation(fields: [industryId], references: [id], onDelete: Cascade)
-  interviews      Interview[]
-
-  @@map("applications")
-  @@unique([opportunityId, candidateId])
-  @@index([opportunityId])
-  @@index([candidateId])
-  @@index([industryId])
-  @@index([status])
-  @@index([appliedAt])
-}
-
-// Table 11: Saved Opportunities - Bookmarked Opportunities
-model SavedOpportunity {
-  id            String @id @default(cuid())
-  candidateId   String @map("candidate_id")
-  opportunityId String @map("opportunity_id")
-  savedAt       DateTime @default(now()) @map("saved_at")
-  notes         String? // Personal notes
-
-  // Relationships
-  candidate     Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
-  opportunity   Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
-
-  @@map("saved_opportunities")
-  @@unique([candidateId, opportunityId])
-  @@index([candidateId])
-  @@index([opportunityId])
-  @@index([savedAt])
-}
-
-// Table 12: Candidate Skills - Candidate Skill Profiles
-model CandidateSkill {
-  id                String     @id @default(cuid())
-  candidateId       String     @map("candidate_id")
-  skillName         String     @map("skill_name")
-  proficiency       SkillLevel
-  yearsOfExperience Int?       @map("years_of_experience")
-  certificationUrl  String?    @map("certification_url")
-  isEndorsed        Boolean    @default(false) @map("is_endorsed") // Future: peer endorsements
-
-  // Relationships
-  candidate         Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
-
-  @@map("candidate_skills")
-  @@unique([candidateId, skillName])
-  @@index([candidateId])
-  @@index([skillName])
-  @@index([proficiency])
-}
-
-// Table 13: Opportunity Views - Analytics Tracking
-model OpportunityView {
-  id            String   @id @default(cuid())
-  opportunityId String   @map("opportunity_id")
-  
-  // Viewer Information (anonymous)
-  viewerType    String   @map("viewer_type") // CANDIDATE, INDUSTRY, GUEST
-  isPremium     Boolean  @default(false) @map("is_premium")
-  userAgent     String?  @map("user_agent")
-  ipAddress     String?  @map("ip_address")
-  referer       String?
-  
-  // View Details
-  viewedAt      DateTime @default(now()) @map("viewed_at")
-  timeSpent     Int?     @map("time_spent") // In seconds
-  
-  // Location (derived from IP)
-  city          String?
-  country       String?
-
-  // Relationships
-  opportunity   Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
-
-  @@map("opportunity_views")
-  @@index([opportunityId])
-  @@index([viewedAt])
-  @@index([viewerType])
-}
-
-// ============================================================================
-// INSTITUTE INTEGRATION (3 TABLES)
-// ============================================================================
-
-// Table 14: Institute Students - College Student Mapping
-model InstituteStudent {
-  id          String   @id @default(cuid())
-  instituteId String   @map("institute_id")
-  candidateId String   @map("candidate_id")
-  studentId   String   @map("student_id") // College roll number
-  programId   String   @map("program_id")
-  
-  // Academic Details
-  semester    Int?
-  year        Int?
-  cgpa        Float?
-  
-  // Status
-  isActive    Boolean  @default(true) @map("is_active")
-  enrolledAt  DateTime @default(now()) @map("enrolled_at")
-  graduatedAt DateTime? @map("graduated_at")
-
-  // Relationships
-  institute   Institute @relation(fields: [instituteId], references: [id], onDelete: Cascade)
-  candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
-  program     InstituteProgram @relation(fields: [programId], references: [id])
-
-  @@map("institute_students")
-  @@unique([instituteId, studentId])
-  @@unique([instituteId, candidateId])
-  @@index([instituteId])
-  @@index([candidateId])
-  @@index([programId])
-  @@index([isActive])
-}
-
-// Table 15: Institute Analytics - Institute Dashboard Metrics
-model InstituteAnalytics {
-  id                  String   @id @default(cuid())
-  instituteId         String   @map("institute_id")
-  
-  // Time Period
-  month               Int
-  year                Int
-  
-  // Student Metrics
-  totalStudents       Int      @default(0) @map("total_students")
-  activeStudents      Int      @default(0) @map("active_students")
-  registeredStudents  Int      @default(0) @map("registered_students")
-  
-  // Application Metrics
-  totalApplications   Int      @default(0) @map("total_applications")
-  successfulPlacements Int     @default(0) @map("successful_placements")
-  averageStipend      Float?   @map("average_stipend")
-  
-  // Program Metrics
-  programsWithRequirements Int @default(0) @map("programs_with_requirements")
-  completedRequirements   Int @default(0) @map("completed_requirements")
-  
-  // Audit timestamps
-  calculatedAt        DateTime @default(now()) @map("calculated_at")
-
-  // Relationships
-  institute           Institute @relation(fields: [instituteId], references: [id], onDelete: Cascade)
-
-  @@map("institute_analytics")
-  @@unique([instituteId, month, year])
-  @@index([instituteId])
-  @@index([year, month])
-}
-
-// Table 16: Institute Programs - Academic Programs Requiring Internships
-model InstituteProgram {
-  id                      String      @id @default(cuid())
-  instituteId             String      @map("institute_id")
-  programName             String      @map("program_name")
-  programType             ProgramType @map("program_type")
-  department              String
-  
-  // Internship Requirements
-  internshipRequired      Boolean     @default(false) @map("internship_required")
-  minimumDuration         Int?        @map("minimum_duration") // In months
-  creditHours             Int?        @map("credit_hours")
-  semester                Int?        // Which semester requires internship
-  
-  // Program Details
-  totalSeats              Int?        @map("total_seats")
-  currentStudents         Int         @default(0) @map("current_students")
-  isActive                Boolean     @default(true) @map("is_active")
-  
-  // Audit timestamps
-  createdAt               DateTime    @default(now()) @map("created_at")
-  updatedAt               DateTime    @updatedAt @map("updated_at")
-
-  // Relationships
-  institute               Institute @relation(fields: [instituteId], references: [id], onDelete: Cascade)
-  students                InstituteStudent[]
-
-  @@map("institute_programs")
-  @@unique([instituteId, programName])
-  @@index([instituteId])
-  @@index([programType])
-  @@index([internshipRequired])
-  @@index([isActive])
-}
-
-// ============================================================================
-// COMMUNICATION (4 TABLES)
-// ============================================================================
-
-// Table 17: Messages - In-platform Messaging
-model Message {
-  id           String   @id @default(cuid())
-  senderId     String   @map("sender_id")
-  receiverId   String   @map("receiver_id")
-  
-  // Message Content
-  subject      String?
-  content      String
-  attachmentUrl String? @map("attachment_url")
-  
-  // Message Status
-  isRead       Boolean  @default(false) @map("is_read")
-  readAt       DateTime? @map("read_at")
-  
-  // Privacy & Moderation
-  isBlocked    Boolean  @default(false) @map("is_blocked")
-  reportedAt   DateTime? @map("reported_at")
-  
-  // Audit timestamps
-  sentAt       DateTime @default(now()) @map("sent_at")
-
-  // Relationships
-  sender       User @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
-  receiver     User @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
-
-  @@map("messages")
-  @@index([senderId])
-  @@index([receiverId])
-  @@index([sentAt])
-  @@index([isRead])
-}
-
-// Table 18: Notifications - System Notifications
-model Notification {
-  id        String             @id @default(cuid())
-  userId    String             @map("user_id")
-  type      NotificationType
-  title     String
-  message   String
-  
-  // Notification Data
-  data      Json?              // Additional context data
-  actionUrl String?            @map("action_url")
-  
-  // Status
-  isRead    Boolean            @default(false) @map("is_read")
-  readAt    DateTime?          @map("read_at")
-  
-  // Audit timestamps
-  createdAt DateTime           @default(now()) @map("created_at")
-
-  // Relationships
-  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("notifications")
-  @@index([userId])
-  @@index([type])
-  @@index([isRead])
-  @@index([createdAt])
-}
-
-// Table 19: Interviews - Interview Scheduling
-model Interview {
-  id            String            @id @default(cuid())
-  applicationId String            @map("application_id")
-  industryId    String            @map("industry_id")
-  candidateId   String            @map("candidate_id")
-  
-  // Interview Details
-  title         String
-  description   String?
-  scheduledAt   DateTime          @map("scheduled_at")
-  duration      Int               @default(60) // In minutes
-  
-  // Location/Platform
-  location      String?
-  meetingUrl    String?           @map("meeting_url")
-  type          InterviewType
-  
-  // Status & Outcome
-  status        InterviewStatus   @default(SCHEDULED)
-  outcome       InterviewOutcome?
-  feedback      String?
-  rating        Int?              // 1-5 stars
-  
-  // Notes
-  companyNotes  String?           @map("company_notes")
-  candidateNotes String?          @map("candidate_notes")
-  
-  // Audit timestamps
-  createdAt     DateTime          @default(now()) @map("created_at")
-  updatedAt     DateTime          @updatedAt @map("updated_at")
-
-  // Relationships
-  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  industry      Industry @relation(fields: [industryId], references: [id], onDelete: Cascade)
-  candidate     Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
-
-  @@map("interviews")
-  @@index([applicationId])
-  @@index([industryId])
-  @@index([candidateId])
-  @@index([scheduledAt])
-  @@index([status])
-}
-
-// Table 20: Support Tickets - Customer Support
-model SupportTicket {
-  id          String         @id @default(cuid())
-  userId      String         @map("user_id")
-  subject     String
-  description String
-  status      TicketStatus   @default(OPEN)
-  priority    TicketPriority @default(MEDIUM)
-  category    String         // Technical, Billing, General, etc.
-  
-  // Response
-  response    String?
-  resolvedAt  DateTime?      @map("resolved_at")
-  assignedTo  String?        @map("assigned_to") // Admin user ID
-  
-  // Audit timestamps
-  createdAt   DateTime       @default(now()) @map("created_at")
-  updatedAt   DateTime       @updatedAt @map("updated_at")
-
-  // Relationships
-  user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("support_tickets")
-  @@index([userId])
-  @@index([status])
-  @@index([priority])
-  @@index([category])
-  @@index([createdAt])
-}
-
-// ============================================================================
-// LEGAL & COMPLIANCE (3 TABLES)
-// ============================================================================
-
-// Table 21: Terms Versions - Different T&C for Each User Type
-model TermsVersion {
-  id          String     @id @default(cuid())
-  userType    UserType   @map("user_type")
-  version     String     // e.g., "1.0", "1.1", "2.0"
-  title       String
-  content     String     @map("content")// Full terms and conditions text
-  
-  // Version Control
-  isActive    Boolean    @default(true) @map("is_active")
-  isCurrent   Boolean    @default(false) @map("is_current")
-  
-  // Effective Dates
-  effectiveFrom DateTime @map("effective_from")
-  effectiveTo   DateTime? @map("effective_to")
-  
-  // Audit timestamps
-  createdAt   DateTime   @default(now()) @map("created_at")
-  createdBy   String     @map("created_by") // Admin user ID
-  
-  // Change Log
-  changeLog   String?    @map("change_log") // What changed in this version
-  
-  // Relationships
-  acceptances TermsAcceptance[]
-
-  @@map("terms_versions")
-  @@unique([userType, version])
-  @@index([userType])
-  @@index([isActive])
-  @@index([isCurrent])
-  @@index([effectiveFrom])
-}
-
-// Table 22: Terms Acceptances - Legal Compliance Tracking
-model TermsAcceptance {
-  id              String       @id @default(cuid())
-  userId          String       @map("user_id")
-  termsVersionId  String       @map("terms_version_id")
-  userType        UserType     @map("user_type")
-  
-  // Acceptance Details
-  acceptedAt      DateTime     @default(now()) @map("accepted_at")
-  ipAddress       String       @map("ip_address")
-  userAgent       String       @map("user_agent")
-  
-  // Legal Proof
-  digitalSignature String?     @map("digital_signature") // Future: digital signature
-  witnessEmail     String?     @map("witness_email")     // For enterprise contracts
-  
-  // Status
-  isActive        Boolean      @default(true) @map("is_active")
-  revokedAt       DateTime?    @map("revoked_at")
-  revokedReason   String?      @map("revoked_reason")
-
-  // Relationships
-  user            User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  termsVersion    TermsVersion @relation(fields: [termsVersionId], references: [id])
-
-  @@map("terms_acceptances")
-  @@unique([userId, termsVersionId])
-  @@index([userId])
-  @@index([termsVersionId])
-  @@index([acceptedAt])
-  @@index([isActive])
-}
-
-// Table 23: Privacy Audit Logs - Data Access Audit Trail
-model PrivacyAuditLog {
-  id              String      @id @default(cuid())
-  userId          String      @map("user_id")
-  
-  // Action Details
-  action          AuditAction
-  targetUserId    String?     @map("target_user_id") // Who was accessed
-  targetUserType  UserType?   @map("target_user_type")
-  resourceId      String?     @map("resource_id") // ID of viewed resource
-  resourceType    String?     @map("resource_type") // "profile", "resume", "contact"
-  
-  // Access Context
-  accessReason    String?     @map("access_reason") // "job_application", "profile_view"
-  isPremiumAccess Boolean     @default(false) @map("is_premium_access")
-  
-  // Technical Details
-  ipAddress       String      @map("ip_address")
-  userAgent       String      @map("user_agent")
-  sessionId       String?     @map("session_id")
-  
-  // Audit Details
-  accessedAt      DateTime    @default(now()) @map("accessed_at")
-  dataReturned    Json?       @map("data_returned") // What data was actually shown
-  
-  // Legal Compliance
-  legalBasis      String?     @map("legal_basis") // GDPR compliance
-  retentionPeriod Int?        @map("retention_period") // Days to keep this log
-
-  // Relationships
-  user            User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("privacy_audit_logs")
-  @@index([userId])
-  @@index([targetUserId])
-  @@index([action])
-  @@index([accessedAt])
-  @@index([isPremiumAccess])
-}
-
-// ============================================================================
-// CONTENT & SYSTEM (5 TABLES)
-// ============================================================================
-
-// Table 24: Categories - Job Categories
-model Category {
-  id          String  @id @default(cuid())
-  name        String  @unique
-  slug        String  @unique
-  description String?
-  
-  // Display
-  icon        String? // Icon name or URL
-  color       String? // Hex color code
-  sortOrder   Int     @default(0) @map("sort_order")
-  
-  // SEO
-  metaTitle       String? @map("meta_title")
-  metaDescription String? @map("meta_description")
-  
-  // Status
-  isActive    Boolean @default(true) @map("is_active")
-  
-  // Statistics
-  opportunityCount Int @default(0) @map("opportunity_count")
-  
-  // Audit timestamps
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-
-  // Relationships
-  opportunities Opportunity[]
-
-  @@map("categories")
-  @@index([slug])
-  @@index([isActive])
-  @@index([sortOrder])
-}
-
-// Table 25: Locations - Geographic Data
-model Location {
-  id          String  @id @default(cuid())
-  city        String
-  state       String
-  country     String
-  slug        String  @unique
-  
-  // Coordinates
-  latitude    Float?
-  longitude   Float?
-  timezone    String? @default("Asia/Kolkata")
-  
-  // SEO
-  metaTitle       String? @map("meta_title")
-  metaDescription String? @map("meta_description")
-  
-  // Status
-  isActive    Boolean @default(true) @map("is_active")
-  
-  // Statistics
-  opportunityCount Int @default(0) @map("opportunity_count")
-  candidateCount   Int @default(0) @map("candidate_count")
-  industryCount    Int @default(0) @map("industry_count")
-
-  // Relationships
-  opportunities Opportunity[]
-
-  @@map("locations")
-  @@unique([city, state, country])
-  @@index([slug])
-  @@index([city, state])
-  @@index([isActive])
-}
-
-// Table 26: Blog Posts - Content Management
-model BlogPost {
-  id              String         @id @default(cuid())
-  title           String
-  slug            String         @unique
-  excerpt         String
-  content         String
-  
-  // Media
-  featuredImage   String?        @map("featured_image")
-  imageAlt        String?        @map("image_alt")
-  
-  // SEO
-  metaTitle       String?        @map("meta_title")
-  metaDescription String?        @map("meta_description")
-  
-  // Publishing
-  status          BlogPostStatus @default(DRAFT)
-  publishedAt     DateTime?      @map("published_at")
-  
-  // Author
-  authorName      String         @map("author_name")
-  authorEmail     String         @map("author_email")
-  authorBio       String?        @map("author_bio")
-  
-  // Categories & Tags
-  category        String
-  tags            String[]       // Array of tag strings
-  
-  // Analytics
-  viewCount       Int            @default(0) @map("view_count")
-  likeCount       Int            @default(0) @map("like_count")
-  shareCount      Int            @default(0) @map("share_count")
-  
-  // Audit timestamps
-  createdAt       DateTime       @default(now()) @map("created_at")
-  updatedAt       DateTime       @updatedAt @map("updated_at")
-
-  @@map("blog_posts")
-  @@index([slug])
-  @@index([status])
-  @@index([publishedAt])
-  @@index([category])
-}
-
-// Table 27: Certificates - Student Certifications
-model Certificate {
-  id            String    @id @default(cuid())
-  candidateId   String    @map("candidate_id")
-  name          String
-  issuer        String
-  
-  // Dates
-  issueDate     DateTime? @map("issue_date")
-  expiryDate    DateTime? @map("expiry_date")
-  
-  // Verification
-  credentialId  String?   @map("credential_id")
-  credentialUrl String?   @map("credential_url")
-  isVerified    Boolean   @default(false) @map("is_verified")
-  
-  // Details
-  description   String?
-  skills        String[]  // Array of skills gained
-  
-  // Audit timestamps
-  createdAt     DateTime  @default(now()) @map("created_at")
-
-  // Relationships
-  candidate     Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
-
-  @@map("certificates")
-  @@index([candidateId])
-  @@index([issuer])
-  @@index([isVerified])
-}
-
-// Table 28: Search Queries - Search Analytics
-model SearchQuery {
-  id              String   @id @default(cuid())
-  query           String
-  
-  // Search Context
-  userType        UserType? @map("user_type")
-  isPremium       Boolean   @default(false) @map("is_premium")
-  
-  // Filters Applied
-  filters         Json?     // Store search filters as JSON
-  category        String?
-  location        String?
-  workType        WorkType?
-  opportunityType OpportunityType?
-  
-  // Results
-  resultsCount    Int       @map("results_count")
-  clickedResults  Int       @default(0) @map("clicked_results")
-  
-  // User Context
-  userIp          String    @map("user_ip")
-  userAgent       String?   @map("user_agent")
-  referer         String?
-  
-  // Audit timestamps
-  searchedAt      DateTime  @default(now()) @map("searched_at")
-
-  @@map("search_queries")
-  @@index([query])
-  @@index([searchedAt])
-  @@index([userType])
-  @@index([resultsCount])
+  TERMS_ACCEPTED
 }

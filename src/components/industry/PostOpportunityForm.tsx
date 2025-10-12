@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import toast from 'react-hot-toast'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Briefcase, DollarSign, FileText, AlertCircle } from 'lucide-react'
@@ -34,9 +35,7 @@ interface Props {
 
 export default function PostOpportunityForm({ categories, locations, isPremium, postingLimits }: Props) {
   const router = useRouter()
-  const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [success, setSuccess] = useState(false)
 
   const [formData, setFormData] = useState({
     title: '',
@@ -56,7 +55,6 @@ export default function PostOpportunityForm({ categories, locations, isPremium, 
     startDate: ''
   })
 
-  // Check if user can post this type
   const canPostType = (type: string) => {
     if (isPremium) return true
     if (!postingLimits) return true
@@ -68,82 +66,45 @@ export default function PostOpportunityForm({ categories, locations, isPremium, 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-    setLoading(true)
 
     // Validation
     if (formData.title.length < 10 || formData.title.length > 100) {
       setError('Title must be between 10 and 100 characters')
-      setLoading(false)
       return
     }
 
     if (formData.description.length < 50 || formData.description.length > 2000) {
       setError('Description must be between 50 and 2000 characters')
-      setLoading(false)
       return
     }
 
     if (!formData.requirements || formData.requirements.length < 10) {
       setError('Requirements must be at least 10 characters')
-      setLoading(false)
       return
     }
 
     if (!canPostType(formData.type)) {
       setError(`You cannot post ${formData.type} opportunities. ${formData.type === 'FREELANCING' ? 'Upgrade to premium.' : 'Monthly limit reached.'}`)
-      setLoading(false)
       return
     }
 
-    try {
-      const response = await fetch('/api/opportunities', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...formData,
-          stipend: formData.stipend ? parseInt(formData.stipend) : null,
-          duration: formData.duration ? parseInt(formData.duration) : 1,
-          experienceRequired: parseInt(formData.experienceRequired),
-          showCompanyName: true // Always show company name by default
-        })
-      })
+    // ✅ SAVE TO SESSION STORAGE AND REDIRECT TO T&C
+    const dataToSave = {
+      ...formData,
+      stipend: formData.stipend ? parseInt(formData.stipend) : null,
+      duration: formData.duration ? parseInt(formData.duration) : 1,
+      experienceRequired: parseInt(formData.experienceRequired),
+      showCompanyName: true
+    };
 
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to create opportunity')
-      }
-
-      setSuccess(true)
-      setTimeout(() => {
-        router.push('/industry/opportunities')
-      }, 2000)
-
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create opportunity')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  if (success) {
-    return (
-      <Card className="bg-white/70 backdrop-blur-sm border-green-200">
-        <CardContent className="p-12 text-center">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Briefcase className="h-8 w-8 text-green-600" />
-          </div>
-          <h3 className="text-xl font-bold text-gray-900 mb-2">Opportunity Posted Successfully!</h3>
-          <p className="text-gray-600 mb-4">Redirecting to your opportunities...</p>
-        </CardContent>
-      </Card>
-    )
+    sessionStorage.setItem('opportunityFormData', JSON.stringify(dataToSave));
+    toast.success('Form saved! Please accept terms to continue.');
+    router.push('/industry/post/terms');
   }
 
   return (
     <form onSubmit={handleSubmit}>
       <div className="space-y-6">
-        {/* Error Message */}
         {error && (
           <Card className="bg-red-50 border-red-200">
             <CardContent className="p-4 flex items-center gap-2">
@@ -153,7 +114,6 @@ export default function PostOpportunityForm({ categories, locations, isPremium, 
           </Card>
         )}
 
-        {/* Basic Information */}
         <Card className="bg-white/70 backdrop-blur-sm border-teal-100">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -162,7 +122,6 @@ export default function PostOpportunityForm({ categories, locations, isPremium, 
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Title */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Opportunity Title *
@@ -180,7 +139,6 @@ export default function PostOpportunityForm({ categories, locations, isPremium, 
               <p className="text-xs text-gray-500 mt-1">{formData.title.length}/100 characters</p>
             </div>
 
-            {/* Type */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Opportunity Type *
@@ -203,7 +161,6 @@ export default function PostOpportunityForm({ categories, locations, isPremium, 
               </select>
             </div>
 
-            {/* Work Type */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Work Type *
@@ -220,7 +177,6 @@ export default function PostOpportunityForm({ categories, locations, isPremium, 
               </select>
             </div>
 
-            {/* Category */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Category *
@@ -243,7 +199,6 @@ export default function PostOpportunityForm({ categories, locations, isPremium, 
               )}
             </div>
 
-            {/* Location */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Location *
@@ -270,7 +225,6 @@ export default function PostOpportunityForm({ categories, locations, isPremium, 
           </CardContent>
         </Card>
 
-        {/* Description */}
         <Card className="bg-white/70 backdrop-blur-sm border-teal-100">
           <CardHeader>
             <CardTitle>Description & Requirements</CardTitle>
@@ -336,7 +290,6 @@ export default function PostOpportunityForm({ categories, locations, isPremium, 
           </CardContent>
         </Card>
 
-        {/* Compensation & Duration */}
         <Card className="bg-white/70 backdrop-blur-sm border-teal-100">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -348,7 +301,7 @@ export default function PostOpportunityForm({ categories, locations, isPremium, 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Stipend (₹) - Optional
+                  Monthly Stipend (₹) - Optional
                 </label>
                 <input
                   type="number"
@@ -356,24 +309,30 @@ export default function PostOpportunityForm({ categories, locations, isPremium, 
                   value={formData.stipend}
                   onChange={(e) => setFormData({ ...formData, stipend: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                  placeholder="Monthly stipend"
+                  placeholder="e.g., 10000"
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  Typical range: ₹5,000 - ₹50,000/month
+                </p>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Duration (weeks) *
+                  Duration (months) *
                 </label>
                 <input
                   type="number"
                   required
                   min="1"
-                  max="52"
+                  max="24"
                   value={formData.duration}
                   onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                  placeholder="Duration in weeks"
+                  placeholder="e.g., 6"
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  Typically 3-6 months for internships
+                </p>
               </div>
             </div>
 
@@ -416,26 +375,27 @@ export default function PostOpportunityForm({ categories, locations, isPremium, 
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                 placeholder="0"
               />
+              <p className="text-xs text-gray-500 mt-1">
+                0 for freshers/students
+              </p>
             </div>
           </CardContent>
         </Card>
 
-        {/* Submit Buttons */}
         <div className="flex gap-4">
           <Button
             type="button"
             variant="secondary"
             onClick={() => router.back()}
-            disabled={loading}
           >
             Cancel
           </Button>
           <Button
             type="submit"
-            disabled={loading || !canPostType(formData.type)}
+            disabled={!canPostType(formData.type)}
             className="bg-gradient-to-r from-teal-600 to-green-600 hover:from-teal-700 hover:to-green-700"
           >
-            {loading ? 'Posting...' : 'Post Opportunity'}
+            Continue to Terms →
           </Button>
         </div>
       </div>

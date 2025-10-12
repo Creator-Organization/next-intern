@@ -1,7 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { redirect, notFound } from 'next/navigation'
 import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
+import { Header } from '@/components/ui/header'
 import EditOpportunityForm from '@/components/industry/EditOpportunityForm'
+import { ArrowLeft } from 'lucide-react'
+import Link from 'next/link'
 
 // Get opportunity data for editing
 async function getOpportunityData(opportunityId: string, userId: string) {
@@ -83,23 +87,38 @@ export default async function EditOpportunityPage({
   ])
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 font-manrope">
-          Edit Opportunity
-        </h1>
-        <p className="text-gray-600">
-          Update the details of your opportunity
-        </p>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <Header user={session.user as any} />
+      
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="space-y-6">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <Link 
+                href="/industry/opportunities"
+                className="flex items-center text-gray-600 hover:text-gray-900 mb-2"
+              >
+                <ArrowLeft className="h-4 w-4 mr-1" />
+                Back to Opportunities
+              </Link>
+              <h1 className="text-2xl font-bold text-gray-900 font-manrope">
+                Edit Opportunity
+              </h1>
+              <p className="text-gray-600">
+                Update the details of your opportunity
+              </p>
+            </div>
+          </div>
 
-      {/* Form Component */}
-      <EditOpportunityForm
-        opportunity={opportunity}
-        categories={categories}
-        locations={locations}
-      />
+          {/* Form Component */}
+          <EditOpportunityForm
+            opportunity={opportunity}
+            categories={categories}
+            locations={locations}
+          />
+        </div>
+      </div>
     </div>
   )
 }
