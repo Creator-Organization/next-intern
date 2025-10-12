@@ -1,6 +1,8 @@
-import { auth } from '@/lib/auth';
-import { redirect } from 'next/navigation';
-import prisma from '@/lib/db';
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import { 
   Briefcase,
   CheckCircle,
@@ -9,48 +11,140 @@ import {
   MapPin,
   Calendar,
   DollarSign,
-  Eye
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+  Eye,
+  Loader2,
+  RefreshCw
+} from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import toast from 'react-hot-toast'
 
-export default async function AdminOpportunities() {
-  const session = await auth();
+interface Opportunity {
+  id: string
+  title: string
+  type: string
+  workType: string
+  description: string
+  requirements: string
+  stipend: number | null
+  duration: number | null
+  createdAt: Date
+  updatedAt: Date
+  isActive: boolean
+  industry: {
+    companyName: string
+  }
+  category: {
+    name: string
+  }
+  location: {
+    city: string
+    state: string
+  }
+  _count?: {
+    applications: number
+  }
+}
 
-  if (!session?.user || session.user.userType !== 'ADMIN') {
-    redirect('/');
+export default function AdminOpportunities() {
+  const { data: session, status } = useSession()
+  const router = useRouter()
+  const [pendingOpportunities, setPendingOpportunities] = useState<Opportunity[]>([])
+  const [activeOpportunities, setActiveOpportunities] = useState<Opportunity[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [processingId, setProcessingId] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/auth/signin')
+    } else if (session?.user?.userType !== 'ADMIN') {
+      router.push('/')
+    }
+  }, [status, session, router])
+
+  useEffect(() => {
+    if (status === 'authenticated') {
+      fetchOpportunities()
+    }
+  }, [status])
+
+  const fetchOpportunities = async (showRefreshToast = false) => {
+    if (showRefreshToast) {
+      setIsRefreshing(true)
+    } else {
+      setIsLoading(true)
+    }
+    
+    try {
+      const response = await fetch('/api/admin/opportunities')
+      if (response.ok) {
+        const data = await response.json()
+        setPendingOpportunities(data.pending || [])
+        setActiveOpportunities(data.active || [])
+        if (showRefreshToast) {
+          toast.success('Refreshed successfully!')
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch opportunities:', error)
+      toast.error('Failed to load opportunities')
+    } finally {
+      setIsLoading(false)
+      setIsRefreshing(false)
+    }
   }
 
-  // Fetch opportunities by status
-  const pendingOpportunities = await prisma.opportunity.findMany({
-    where: { isActive: false },
-    include: {
-      industry: true,
-      category: true,
-      location: true
-    },
-    orderBy: { createdAt: 'desc' },
-    take: 50
-  });
+  const handleAction = async (opportunityId: string, action: 'approve' | 'reject' | 'deactivate') => {
+    setProcessingId(opportunityId)
+    try {
+      const response = await fetch('/api/admin/moderate', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ opportunityId, action })
+      })
 
-  const activeOpportunities = await prisma.opportunity.findMany({
-    where: { isActive: true },
-    include: {
-      industry: true,
-      category: true,
-      location: true,
-      applications: true
-    },
-    orderBy: { createdAt: 'desc' },
-    take: 50
-  });
+      if (response.ok) {
+        const data = await response.json()
+        toast.success(data.message)
+        // Refresh the list
+        await fetchOpportunities()
+      } else {
+        const error = await response.json()
+        toast.error(error.error || 'Action failed')
+      }
+    } catch (error) {
+      console.error('Action failed:', error)
+      toast.error('Failed to process action')
+    } finally {
+      setProcessingId(null)
+    }
+  }
+
+  if (status === 'loading' || isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="animate-spin h-12 w-12 text-primary-600" />
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 font-manrope">Opportunity Moderation</h1>
-        <p className="text-gray-600 mt-2">Review and moderate opportunity postings</p>
+      {/* Page Header with Refresh Button */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 font-manrope">Opportunity Moderation</h1>
+          <p className="text-gray-600 mt-2">Review and moderate opportunity postings</p>
+        </div>
+        <Button 
+          variant="secondary"
+          onClick={() => fetchOpportunities(true)}
+          disabled={isRefreshing}
+        >
+          <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+          Refresh
+        </Button>
       </div>
 
       {/* Pending Review Section */}
@@ -134,12 +228,24 @@ export default async function AdminOpportunities() {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex flex-col gap-2">
-                    <Button className="bg-green-600 hover:bg-green-700">
-                      <CheckCircle className="w-4 h-4 mr-2" />
+                  <div className="flex flex-col gap-2 lg:min-w-[140px]">
+                    <Button 
+                      className="bg-green-600 hover:bg-green-700 text-white"
+                      onClick={() => handleAction(opportunity.id, 'approve')}
+                      disabled={processingId === opportunity.id}
+                    >
+                      {processingId === opportunity.id ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                      )}
                       Approve
                     </Button>
-                    <Button variant="destructive">
+                    <Button 
+                      variant="destructive"
+                      onClick={() => handleAction(opportunity.id, 'reject')}
+                      disabled={processingId === opportunity.id}
+                    >
                       <XCircle className="w-4 h-4 mr-2" />
                       Reject
                     </Button>
@@ -192,7 +298,7 @@ export default async function AdminOpportunities() {
                       </p>
                       <div className="flex items-center gap-3 text-xs">
                         <span>{opportunity.type}</span>
-                        <span>{opportunity.applications.length} applications</span>
+                        <span>{opportunity._count?.applications || 0} applications</span>
                       </div>
                       <p className="text-xs text-green-600">
                         Approved {new Date(opportunity.updatedAt).toLocaleDateString('en-IN')}
@@ -204,8 +310,18 @@ export default async function AdminOpportunities() {
                   <Button variant="secondary" size="sm" className="flex-1">
                     View Details
                   </Button>
-                  <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700 hover:bg-red-50">
-                    Deactivate
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    onClick={() => handleAction(opportunity.id, 'deactivate')}
+                    disabled={processingId === opportunity.id}
+                  >
+                    {processingId === opportunity.id ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      'Deactivate'
+                    )}
                   </Button>
                 </div>
               </Card>
@@ -214,5 +330,5 @@ export default async function AdminOpportunities() {
         )}
       </div>
     </div>
-  );
+  )
 }

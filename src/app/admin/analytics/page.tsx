@@ -1,6 +1,6 @@
-import { auth } from '@/lib/auth';
-import { redirect } from 'next/navigation';
-import prisma from '@/lib/db';
+import { auth } from '@/lib/auth'
+import { redirect } from 'next/navigation'
+import { db } from '@/lib/db'
 import { 
   Users, 
   TrendingUp, 
@@ -10,60 +10,60 @@ import {
   XCircle,
   Clock,
   BarChart3
-} from 'lucide-react';
-import { Card } from '@/components/ui/card';
+} from 'lucide-react'
+import { Card } from '@/components/ui/card'
 
 export default async function AdminAnalytics() {
-  const session = await auth();
+  const session = await auth()
 
   if (!session?.user || session.user.userType !== 'ADMIN') {
-    redirect('/');
+    redirect('/')
   }
 
-  // User Analytics
-  const totalUsers = await prisma.user.count();
+  // ✅ User Analytics
+  const totalUsers = await db.user.count()
   const usersByType = {
-    candidate: await prisma.user.count({ where: { userType: 'CANDIDATE' } }),
-    industry: await prisma.user.count({ where: { userType: 'INDUSTRY' } }),
-    institute: await prisma.user.count({ where: { userType: 'INSTITUTE' } }),
-    admin: await prisma.user.count({ where: { userType: 'ADMIN' } })
-  };
+    candidate: await db.user.count({ where: { userType: 'CANDIDATE' } }),
+    industry: await db.user.count({ where: { userType: 'INDUSTRY' } }),
+    institute: await db.user.count({ where: { userType: 'INSTITUTE' } }),
+    admin: await db.user.count({ where: { userType: 'ADMIN' } })
+  }
 
-  const premiumUsers = await prisma.user.count({ where: { isPremium: true } });
-  const activeUsers = await prisma.user.count({ where: { isActive: true } });
-  const premiumConversion = totalUsers > 0 ? ((premiumUsers / totalUsers) * 100).toFixed(1) : '0.0';
+  const premiumUsers = await db.user.count({ where: { isPremium: true } })
+  const activeUsers = await db.user.count({ where: { isActive: true } })
+  const premiumConversion = totalUsers > 0 ? ((premiumUsers / totalUsers) * 100).toFixed(1) : '0.0'
 
-  // Opportunity Analytics
-  const totalOpportunities = await prisma.opportunity.count();
+  // ✅ Opportunity Analytics
+  const totalOpportunities = await db.opportunity.count()
   const opportunitiesByType = {
-    internship: await prisma.opportunity.count({ where: { type: 'INTERNSHIP' } }),
-    project: await prisma.opportunity.count({ where: { type: 'PROJECT' } }),
-    freelancing: await prisma.opportunity.count({ where: { type: 'FREELANCING' } })
-  };
+    internship: await db.opportunity.count({ where: { type: 'INTERNSHIP' } }),
+    project: await db.opportunity.count({ where: { type: 'PROJECT' } }),
+    freelancing: await db.opportunity.count({ where: { type: 'FREELANCING' } })
+  }
 
-  const activeOpportunities = await prisma.opportunity.count({ where: { isActive: true } });
+  const activeOpportunities = await db.opportunity.count({ where: { isActive: true } })
 
-  // Application Analytics
-  const totalApplications = await prisma.application.count();
+  // ✅ Application Analytics
+  const totalApplications = await db.application.count()
   const applicationsByStatus = {
-    pending: await prisma.application.count({ where: { status: 'PENDING' } }),
-    reviewed: await prisma.application.count({ where: { status: 'REVIEWED' } }),
-    shortlisted: await prisma.application.count({ where: { status: 'SHORTLISTED' } }),
-    selected: await prisma.application.count({ where: { status: 'SELECTED' } }),
-    rejected: await prisma.application.count({ where: { status: 'REJECTED' } })
-  };
+    pending: await db.application.count({ where: { status: 'PENDING' } }),
+    reviewed: await db.application.count({ where: { status: 'REVIEWED' } }),
+    shortlisted: await db.application.count({ where: { status: 'SHORTLISTED' } }),
+    selected: await db.application.count({ where: { status: 'SELECTED' } }),
+    rejected: await db.application.count({ where: { status: 'REJECTED' } })
+  }
 
   const successRate = totalApplications > 0 
     ? ((applicationsByStatus.selected / totalApplications) * 100).toFixed(1) 
-    : '0.0';
+    : '0.0'
 
-  // Growth metrics (last 30 days)
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  // ✅ Growth metrics (last 30 days)
+  const thirtyDaysAgo = new Date()
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
 
-  const newUsersLast30Days = await prisma.user.count({
+  const newUsersLast30Days = await db.user.count({
     where: { createdAt: { gte: thirtyDaysAgo } }
-  });
+  })
 
   return (
     <div className="space-y-8">
@@ -139,28 +139,28 @@ export default async function AdminAnalytics() {
             <p className="text-2xl font-bold text-blue-600">{usersByType.candidate}</p>
             <p className="text-sm text-gray-600 mt-1">Candidates</p>
             <p className="text-xs text-gray-500">
-              {((usersByType.candidate / totalUsers) * 100).toFixed(1)}%
+              {totalUsers > 0 ? ((usersByType.candidate / totalUsers) * 100).toFixed(1) : '0.0'}%
             </p>
           </div>
           <div className="text-center p-4 bg-purple-50 rounded-lg">
             <p className="text-2xl font-bold text-purple-600">{usersByType.industry}</p>
             <p className="text-sm text-gray-600 mt-1">Industries</p>
             <p className="text-xs text-gray-500">
-              {((usersByType.industry / totalUsers) * 100).toFixed(1)}%
+              {totalUsers > 0 ? ((usersByType.industry / totalUsers) * 100).toFixed(1) : '0.0'}%
             </p>
           </div>
           <div className="text-center p-4 bg-green-50 rounded-lg">
             <p className="text-2xl font-bold text-green-600">{usersByType.institute}</p>
             <p className="text-sm text-gray-600 mt-1">Institutes</p>
             <p className="text-xs text-gray-500">
-              {((usersByType.institute / totalUsers) * 100).toFixed(1)}%
+              {totalUsers > 0 ? ((usersByType.institute / totalUsers) * 100).toFixed(1) : '0.0'}%
             </p>
           </div>
           <div className="text-center p-4 bg-red-50 rounded-lg">
             <p className="text-2xl font-bold text-red-600">{usersByType.admin}</p>
             <p className="text-sm text-gray-600 mt-1">Admins</p>
             <p className="text-xs text-gray-500">
-              {((usersByType.admin / totalUsers) * 100).toFixed(1)}%
+              {totalUsers > 0 ? ((usersByType.admin / totalUsers) * 100).toFixed(1) : '0.0'}%
             </p>
           </div>
         </div>
@@ -320,5 +320,5 @@ export default async function AdminAnalytics() {
         </div>
       </Card>
     </div>
-  );
+  )
 }

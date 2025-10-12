@@ -1,7 +1,9 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import { auth } from '@/lib/auth';
-import { redirect } from 'next/navigation';
-import prisma from '@/lib/db';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import { 
   GraduationCap,
   CheckCircle,
@@ -9,45 +11,107 @@ import {
   Clock,
   Globe,
   MapPin,
-  Users as UsersIcon,
   AlertTriangle,
-  Shield
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+  Shield,
+  Loader2
+} from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import toast from 'react-hot-toast'
 
-export default async function AdminInstitutes() {
-  const session = await auth();
+interface Institute {
+  id: string
+  instituteName: string
+  instituteType: string
+  city: string
+  state: string
+  websiteUrl: string | null
+  description: string | null
+  ugcApproved: boolean
+  aicteApproved: boolean
+  accreditationNumber: string | null
+  createdAt: Date
+  verifiedAt: Date | null
+  isVerified: boolean
+  user: {
+    email: string
+  }
+  programs: any[]
+  instituteStudents: any[]
+}
 
-  if (!session?.user || session.user.userType !== 'ADMIN') {
-    redirect('/');
+export default function AdminInstitutes() {
+  const { data: session, status } = useSession()
+  const router = useRouter()
+  const [pendingInstitutes, setPendingInstitutes] = useState<Institute[]>([])
+  const [verifiedInstitutes, setVerifiedInstitutes] = useState<Institute[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [processingId, setProcessingId] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/auth/signin')
+    } else if (session?.user?.userType !== 'ADMIN') {
+      router.push('/')
+    }
+  }, [status, session, router])
+
+  useEffect(() => {
+    if (status === 'authenticated') {
+      fetchInstitutes()
+    }
+  }, [status])
+
+  const fetchInstitutes = async () => {
+    setIsLoading(true)
+    try {
+      const response = await fetch('/api/admin/institutes')
+      if (response.ok) {
+        const data = await response.json()
+        setPendingInstitutes(data.pending || [])
+        setVerifiedInstitutes(data.verified || [])
+      }
+    } catch (error) {
+      console.error('Failed to fetch institutes:', error)
+      toast.error('Failed to load institutes')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  // Fetch institutes with verification status
-  const pendingInstitutes = await prisma.institute.findMany({
-    where: { isVerified: false },
-    include: {
-      user: true,
-      programs: true,
-      instituteStudents: {
-        where: { isActive: true }
-      }
-    },
-    orderBy: { createdAt: 'desc' }
-  });
+  const handleAction = async (instituteId: string, action: 'approve' | 'reject' | 'revoke') => {
+    setProcessingId(instituteId)
+    try {
+      const response = await fetch('/api/admin/verify/institute', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ instituteId, action })
+      })
 
-  const verifiedInstitutes = await prisma.institute.findMany({
-    where: { isVerified: true },
-    include: {
-      user: true,
-      programs: true,
-      instituteStudents: {
-        where: { isActive: true }
+      if (response.ok) {
+        const data = await response.json()
+        toast.success(data.message)
+        // Refresh the list
+        await fetchInstitutes()
+      } else {
+        const error = await response.json()
+        toast.error(error.error || 'Action failed')
       }
-    },
-    orderBy: { verifiedAt: 'desc' },
-    take: 20
-  });
+    } catch (error) {
+      console.error('Action failed:', error)
+      toast.error('Failed to process action')
+    } finally {
+      setProcessingId(null)
+    }
+  }
+
+  if (status === 'loading' || isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="animate-spin h-12 w-12 text-primary-600" />
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -157,12 +221,24 @@ export default async function AdminInstitutes() {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex flex-col gap-2">
-                    <Button className="bg-green-600 hover:bg-green-700">
-                      <CheckCircle className="w-4 h-4 mr-2" />
+                  <div className="flex flex-col gap-2 lg:min-w-[140px]">
+                    <Button 
+                      className="bg-green-600 hover:bg-green-700 text-white"
+                      onClick={() => handleAction(institute.id, 'approve')}
+                      disabled={processingId === institute.id}
+                    >
+                      {processingId === institute.id ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                      )}
                       Approve
                     </Button>
-                    <Button variant="destructive">
+                    <Button 
+                      variant="destructive"
+                      onClick={() => handleAction(institute.id, 'reject')}
+                      disabled={processingId === institute.id}
+                    >
                       <XCircle className="w-4 h-4 mr-2" />
                       Reject
                     </Button>
@@ -225,8 +301,18 @@ export default async function AdminInstitutes() {
                   <Button variant="secondary" size="sm" className="flex-1">
                     View Details
                   </Button>
-                  <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700 hover:bg-red-50">
-                    Revoke
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    onClick={() => handleAction(institute.id, 'revoke')}
+                    disabled={processingId === institute.id}
+                  >
+                    {processingId === institute.id ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      'Revoke'
+                    )}
                   </Button>
                 </div>
               </Card>
@@ -235,5 +321,5 @@ export default async function AdminInstitutes() {
         )}
       </div>
     </div>
-  );
+  )
 }
