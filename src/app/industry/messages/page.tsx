@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
+import { Suspense } from 'react'
 import { useState, useEffect, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -46,7 +47,7 @@ interface Conversation {
   isVerified: boolean
 }
 
-export default function IndustryMessagesPage() {
+function MessagesContent() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -450,5 +451,17 @@ export default function IndustryMessagesPage() {
         </Card>
       </div>
     </div>
+  )
+}
+
+export default function IndustryMessagesPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+        <Loader2 className="animate-spin h-12 w-12 text-primary-600" />
+      </div>
+    }>
+      <MessagesContent />
+    </Suspense>
   )
 }
