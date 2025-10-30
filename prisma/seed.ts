@@ -1,5 +1,5 @@
 // prisma/seed.ts
-// NextIntern v2 Database Seed Script - Comprehensive Test Data
+// Internship And Project v2 Database Seed Script - Comprehensive Test Data
 // Creates realistic data for all 28 tables with privacy and premium features
 
 import { PrismaClient } from '@prisma/client'
@@ -299,7 +299,7 @@ const blogPosts = [
 ]
 
 async function main() {
-  console.log('🌱 Starting NextIntern v2 comprehensive database seed...')
+  console.log('🌱 Starting Internship And Project v2 comprehensive database seed...')
 
   // Clear existing data in correct order (respecting foreign key constraints)
   console.log('🧹 Clearing existing data...')
@@ -378,7 +378,7 @@ async function main() {
         userType: 'CANDIDATE',
         version: '1.0',
         title: 'Candidate Terms and Conditions',
-        content: 'These terms govern the use of NextIntern platform by candidates...',
+        content: 'These terms govern the use of Internship And Project platform by candidates...',
         isActive: true,
         isCurrent: true,
         effectiveFrom: new Date('2025-01-01'),
@@ -391,7 +391,7 @@ async function main() {
         userType: 'INDUSTRY',
         version: '1.0',
         title: 'Industry Terms and Conditions',
-        content: 'These terms govern the use of NextIntern platform by industries...',
+        content: 'These terms govern the use of Internship And Project platform by industries...',
         isActive: true,
         isCurrent: true,
         effectiveFrom: new Date('2025-01-01'),
@@ -404,7 +404,7 @@ async function main() {
         userType: 'INSTITUTE',
         version: '1.0',
         title: 'Institute Terms and Conditions',
-        content: 'These terms govern the use of NextIntern platform by institutes...',
+        content: 'These terms govern the use of Internship And Project platform by institutes...',
         isActive: true,
         isCurrent: true,
         effectiveFrom: new Date('2025-01-01'),
@@ -418,7 +418,7 @@ async function main() {
   console.log('👤 Creating admin user...')
   const adminUser = await prisma.user.create({
     data: {
-      email: 'admin@nextintern.com',
+      email: 'admin@Internship And Project.com',
       passwordHash: await bcrypt.hash('admin123', 10),
       userType: 'ADMIN',
       isVerified: true,
@@ -915,8 +915,8 @@ const candidateNames = [
         content: post.content,
         status: 'PUBLISHED',
         publishedAt: randomDate(new Date('2025-01-01'), new Date()),
-        authorName: 'NextIntern Team',
-        authorEmail: 'team@nextintern.com',
+        authorName: 'Internship And Project Team',
+        authorEmail: 'team@Internship And Project.com',
         category: ['Career Advice', 'Industry Insights', 'Skill Development', 'Interview Tips'][Math.floor(Math.random() * 4)],
         tags: ['internship', 'career', 'skills', 'advice', 'professional development'],
         viewCount: Math.floor(Math.random() * 2000) + 100,

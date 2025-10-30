@@ -76,7 +76,7 @@ export async function GET(
       <body>
         <div class="header">
           <h1>INVOICE</h1>
-          <p>NextIntern Platform</p>
+          <p>Internship And Project Platform</p>
         </div>
         
         <div class="details">
@@ -117,7 +117,7 @@ export async function GET(
 
         <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; color: #666;">
           <p>Thank you for your business!</p>
-          <p>NextIntern - Privacy-focused internship marketplace</p>
+          <p>Internship And Project - Privacy-focused internship marketplace</p>
         </div>
       </body>
       </html>

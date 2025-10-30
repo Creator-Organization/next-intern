@@ -71,7 +71,7 @@ function SignInContent() {
         
         <div className="text-center">
           <h1 className="text-3xl font-bold text-gray-900 font-manrope mb-2">
-            NextIntern
+            Internship And Project
           </h1>
           <p className="text-gray-600">
             {showTypeSelector ? 'Sign in to your account' : `Sign in as ${getUserTypeDisplayName()}`}

@@ -1,5 +1,5 @@
 // src/app/candidate/saved/page.tsx
-// Saved Opportunities Page - NextIntern 2.0
+// Saved Opportunities Page - Internship And Project 2.0
 
 'use client';
 

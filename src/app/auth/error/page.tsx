@@ -1,6 +1,6 @@
 /**
  * Authentication Error Page
- * NextIntern - Authentication System
+ * Internship And Project - Authentication System
  */
 
 'use client'

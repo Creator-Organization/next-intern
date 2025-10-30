@@ -1,6 +1,6 @@
 /**
  * Terms & Conditions Acceptance API
- * NextIntern v2 - Fixed import
+ * Internship And Project v2 - Fixed import
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'

@@ -1,5 +1,5 @@
 // src/app/legal/terms/industry/page.tsx
-// Company/Industry Terms & Conditions Page - NextIntern 2.0
+// Company/Industry Terms & Conditions Page - Internship And Project 2.0
 
 'use client';
 
@@ -67,7 +67,7 @@ export default function IndustryTermsPage() {
       <header className="sticky top-0 z-50 bg-white/80 shadow-sm backdrop-blur-lg">
         <div className="container mx-auto flex items-center justify-between px-6 py-4">
           <Link href="/" className="text-2xl font-bold text-gray-800">
-            NextIntern <span className="text-green-600">2.0</span>
+            Internship And Project <span className="text-green-600">2.0</span>
           </Link>
           <Link
             href="/industry"
@@ -90,7 +90,7 @@ export default function IndustryTermsPage() {
               Company Terms & Conditions
             </CardTitle>
             <p className="mt-2 text-gray-600">
-              Please review and accept our terms to continue using NextIntern
+              Please review and accept our terms to continue using Internship And Project
               2.0 as a company/recruiter.
             </p>
           </CardHeader>
@@ -152,7 +152,7 @@ export default function IndustryTermsPage() {
                 1. Company Responsibilities
               </h3>
               <p className="mb-4 text-gray-700">
-                As a company on NextIntern 2.0, you agree to:
+                As a company on Internship And Project 2.0, you agree to:
               </p>
               <ul className="mb-6 list-disc space-y-2 pl-6 text-gray-700">
                 <li>Provide accurate company information and job descriptions</li>
@@ -168,7 +168,7 @@ export default function IndustryTermsPage() {
                 2. Posting Limits & Premium Features
               </h3>
               <p className="mb-4 text-gray-700">
-                NextIntern 2.0 offers tiered access for companies:
+                Internship And Project 2.0 offers tiered access for companies:
               </p>
               <ul className="mb-6 list-disc space-y-2 pl-6 text-gray-700">
                 <li>

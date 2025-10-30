@@ -1,5 +1,5 @@
 // src/app/legal/terms/institute/page.tsx
-// Institute Terms & Conditions Page - NextIntern 2.0
+// Institute Terms & Conditions Page - Internship And Project 2.0
 
 'use client';
 
@@ -67,7 +67,7 @@ export default function InstituteTermsPage() {
       <header className="sticky top-0 z-50 bg-white/80 shadow-sm backdrop-blur-lg">
         <div className="container mx-auto flex items-center justify-between px-6 py-4">
           <Link href="/" className="text-2xl font-bold text-gray-800">
-            NextIntern <span className="text-purple-600">2.0</span>
+            Internship And Project <span className="text-purple-600">2.0</span>
           </Link>
           <Link
             href="/institute"
@@ -90,7 +90,7 @@ export default function InstituteTermsPage() {
               Institute Terms & Conditions
             </CardTitle>
             <p className="mt-2 text-gray-600">
-              Please review and accept our terms to continue using NextIntern
+              Please review and accept our terms to continue using Internship And Project
               2.0 as an educational institution.
             </p>
           </CardHeader>
@@ -152,7 +152,7 @@ export default function InstituteTermsPage() {
                 1. Institute Responsibilities
               </h3>
               <p className="mb-4 text-gray-700">
-                As an educational institute on NextIntern 2.0, you agree to:
+                As an educational institute on Internship And Project 2.0, you agree to:
               </p>
               <ul className="mb-6 list-disc space-y-2 pl-6 text-gray-700">
                 <li>Provide accurate institutional information and accreditation</li>
@@ -225,7 +225,7 @@ export default function InstituteTermsPage() {
                 6. Platform Integration
               </h3>
               <p className="mb-4 text-gray-700">
-                How institutes use NextIntern 2.0:
+                How institutes use Internship And Project 2.0:
               </p>
               <ul className="mb-6 list-disc space-y-2 pl-6 text-gray-700">
                 <li>Dashboard for tracking all student placements</li>

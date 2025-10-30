@@ -135,7 +135,7 @@ export default async function AboutPage() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <Link href="/" className="text-2xl font-bold font-manrope text-primary-600">
-                NextIntern
+                Internship And Project
               </Link>
             </div>
             <div className="hidden md:flex items-center space-x-8">
@@ -176,7 +176,7 @@ export default async function AboutPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h1 className="text-4xl lg:text-5xl font-bold font-manrope text-gray-900 mb-6">
-              About NextIntern
+              About Internship And Project
             </h1>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
               We&apos;re on a mission to bridge the gap between talented candidates and innovative companies, 
@@ -276,7 +276,7 @@ export default async function AboutPage() {
                   <div>
                     <h3 className="text-xl font-bold text-gray-900 mb-3">The Solution We Built</h3>
                     <p className="text-gray-600 leading-relaxed">
-                      NextIntern was born from the belief that talent and opportunity should find each other 
+                      Internship And Project was born from the belief that talent and opportunity should find each other 
                       seamlessly. We created a platform that empowers candidates to showcase their skills 
                       authentically while giving companies access to a diverse pool of pre-vetted candidates. 
                       Our technology matches based on merit, not connections.
@@ -293,7 +293,7 @@ export default async function AboutPage() {
                   <div>
                     <h3 className="text-xl font-bold text-gray-900 mb-3">The Impact We&apos;re Making</h3>
                     <p className="text-gray-600 leading-relaxed">
-                      Today, NextIntern has facilitated over {stats.successfulPlacements} successful placements, 
+                      Today, Internship And Project has facilitated over {stats.successfulPlacements} successful placements, 
                       with {Math.round((stats.candidatesPlaced / stats.totalCandidates) * 100)}% of our candidates receiving opportunities. 
                       We&apos;ve democratized access to opportunities at Fortune 500 companies, innovative startups, and everything in between. 
                       Our platform has become the bridge between academic potential and professional success.
@@ -426,7 +426,7 @@ export default async function AboutPage() {
           <div className="grid md:grid-cols-4 gap-8">
             <div>
               <h3 className="text-2xl font-bold font-manrope text-white mb-4">
-                NextIntern
+                Internship And Project
               </h3>
               <p className="text-gray-400 leading-relaxed">
                 Connecting candidates with companies for meaningful career opportunities.
@@ -493,7 +493,7 @@ export default async function AboutPage() {
           
           <div className="border-t border-gray-800 mt-8 pt-8 text-center">
             <p className="text-gray-400">
-              © 2025 NextIntern. All rights reserved.
+              © 2025 Internship And Project. All rights reserved.
             </p>
           </div>
         </div>

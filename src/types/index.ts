@@ -1,4 +1,4 @@
-// NextIntern v2 Types - 28 Table Database Schema
+// Internship And Project v2 Types - 28 Table Database Schema
 // src/types/index.ts
 
 // ============================================================================

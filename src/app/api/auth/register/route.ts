@@ -1,6 +1,6 @@
 /**
  * User Registration API Route
- * NextIntern v2 - Updated with T&C Tracking
+ * Internship And Project v2 - Updated with T&C Tracking
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { createUserWithProfile } from '@/lib/auth-utils'

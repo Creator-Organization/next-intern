@@ -1,5 +1,5 @@
 // src/components/auth/LoginForm.tsx
-// Login Form Component - NextIntern v2 - Fixed
+// Login Form Component - Internship And Project v2 - Fixed
 
 'use client';
 

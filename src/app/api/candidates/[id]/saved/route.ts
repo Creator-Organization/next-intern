@@ -1,5 +1,5 @@
 // src/app/api/candidates/[id]/saved/route.ts
-// Candidate Saved Opportunities API - NextIntern 2.0
+// Candidate Saved Opportunities API - Internship And Project 2.0
 
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';

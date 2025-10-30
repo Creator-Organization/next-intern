@@ -1,6 +1,6 @@
 /**
  * Check Email Availability API Route
- * NextIntern v2 - Updated for 28-Table Schema
+ * Internship And Project v2 - Updated for 28-Table Schema
  */
 
 import { NextRequest, NextResponse } from 'next/server'

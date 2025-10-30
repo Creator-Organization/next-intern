@@ -1,6 +1,6 @@
 /**
  * Authentication Type Definitions
- * NextIntern v2 - Internship Platform
+ * Internship And Project v2 - Internship Platform
  */
 
 import { UserType } from '@prisma/client'

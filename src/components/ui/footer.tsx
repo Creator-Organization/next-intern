@@ -41,7 +41,7 @@ export function Footer({ className = '' }: FooterProps) {
                   <span className="text-white font-bold text-lg">N</span>
                 </div>
                 <span className="text-2xl font-bold font-manrope text-white">
-                  NextIntern
+                  Internship And Project
                 </span>
               </div>
               <p className="text-gray-300 leading-relaxed max-w-md">
@@ -54,9 +54,9 @@ export function Footer({ className = '' }: FooterProps) {
             <div className="space-y-3">
               <div className="flex items-center space-x-3">
                 <Mail className="w-5 h-5 text-primary-400" />
-                <a href="mailto:hello@nextintern.com" 
+                <a href="mailto:hello@Internship And Project.com" 
                    className="text-gray-300 hover:text-white transition-colors">
-                  hello@nextintern.com
+                  hello@Internship And Project.com
                 </a>
               </div>
               <div className="flex items-center space-x-3">
@@ -160,7 +160,7 @@ export function Footer({ className = '' }: FooterProps) {
             </h4>
             <nav className="space-y-3">
               {[
-                { href: '/about', label: 'About NextIntern' },
+                { href: '/about', label: 'About Internship And Project' },
                 { href: '/how-it-works', label: 'How It Works' },
                 { href: '/blog', label: 'Blog & Insights' },
                 { href: '/contact', label: 'Contact Us' },
@@ -188,7 +188,7 @@ export function Footer({ className = '' }: FooterProps) {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
             <div>
               <h4 className="font-semibold text-white text-xl mb-2">
-                Stay Updated with NextIntern
+                Stay Updated with Internship And Project
               </h4>
               <p className="text-gray-300">
                 Get the latest internship opportunities, career tips, and platform updates 
@@ -243,7 +243,7 @@ export function Footer({ className = '' }: FooterProps) {
             {/* Copyright */}
             <div className="flex items-center space-x-4">
               <p className="text-gray-400 text-sm">
-                © 2025 NextIntern. All rights reserved.
+                © 2025 Internship And Project. All rights reserved.
               </p>
               <div className="hidden md:flex items-center space-x-4">
                 <Link href="/privacy" className="text-gray-400 hover:text-white text-sm transition-colors">

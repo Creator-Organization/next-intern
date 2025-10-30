@@ -126,7 +126,7 @@ function ResetPasswordContent() {
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center p-4">
       <div className="absolute top-8 left-8">
         <Link href="/" className="text-2xl font-bold font-manrope text-primary-600">
-          NextIntern
+          Internship And Project
         </Link>
       </div>
 
@@ -166,7 +166,7 @@ function ResetPasswordContent() {
                     <Key className="w-8 h-8 text-primary-600" />
                   </div>
                   <h1 className="text-2xl font-bold text-gray-900 mb-2">Set New Password</h1>
-                  <p className="text-gray-600">Choose a strong password for your NextIntern account.</p>
+                  <p className="text-gray-600">Choose a strong password for your Internship And Project account.</p>
                 </div>
 
                 {errors.length > 0 && (

@@ -1,6 +1,6 @@
 /**
  * Help Center Page - Public Support Hub
- * NextIntern 2.0 - Comprehensive help and support
+ * Internship And Project 2.0 - Comprehensive help and support
  * /help/page.tsx
  */
 
@@ -25,9 +25,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export const metadata: Metadata = {
-  title: 'Help Center | NextIntern',
-  description: 'Get help with NextIntern. Find answers to common questions, contact support, and access resources for students, companies, and institutes.',
-  keywords: ['help', 'support', 'FAQ', 'contact', 'assistance', 'NextIntern guide']
+  title: 'Help Center | Internship And Project',
+  description: 'Get help with Internship And Project. Find answers to common questions, contact support, and access resources for students, companies, and institutes.',
+  keywords: ['help', 'support', 'FAQ', 'contact', 'assistance', 'Internship And Project guide']
 };
 
 // Database connection
@@ -112,7 +112,7 @@ async function getHelpData() {
       {
         id: '2',
         title: 'Understanding company privacy settings',
-        description: 'Learn how NextIntern protects your privacy and what companies can see',
+        description: 'Learn how Internship And Project protects your privacy and what companies can see',
         category: 'Privacy',
         views: 983,
         helpful_count: 134,
@@ -130,7 +130,7 @@ async function getHelpData() {
       {
         id: '4',
         title: 'Company verification process explained',
-        description: 'Step-by-step guide for companies to get verified on NextIntern',
+        description: 'Step-by-step guide for companies to get verified on Internship And Project',
         category: 'Company Setup',
         views: 742,
         helpful_count: 87,
@@ -148,7 +148,7 @@ async function getHelpData() {
       {
         id: '6',
         title: 'Institute partnership program',
-        description: 'How educational institutes can partner with NextIntern',
+        description: 'How educational institutes can partner with Internship And Project',
         category: 'Institutes',
         views: 543,
         helpful_count: 65,
@@ -200,7 +200,7 @@ async function getHelpData() {
         {
           id: '2',
           title: 'Understanding company privacy settings',
-          description: 'Learn how NextIntern protects your privacy and what companies can see',
+          description: 'Learn how Internship And Project protects your privacy and what companies can see',
           category: 'Privacy',
           views: 983,
           helpful_count: 134,
@@ -223,7 +223,7 @@ export default async function HelpCenterPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <Link href="/" className="text-2xl font-bold font-manrope text-primary-600">
-              NextIntern
+              Internship And Project
             </Link>
             <div className="flex items-center space-x-4">
               <Link href="/auth/signin" className="text-gray-600 hover:text-primary-600 transition-colors">
@@ -246,7 +246,7 @@ export default async function HelpCenterPage() {
               How can we help you?
             </h1>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Find answers to your questions, get support, and learn how to make the most of NextIntern.
+              Find answers to your questions, get support, and learn how to make the most of Internship And Project.
             </p>
           </div>
 
@@ -572,7 +572,7 @@ export default async function HelpCenterPage() {
                 Terms of Service
               </Link>
               <Link href="/about" className="text-primary-600 hover:text-primary-700 text-sm font-medium">
-                About NextIntern
+                About Internship And Project
               </Link>
             </div>
           </div>
@@ -585,7 +585,7 @@ export default async function HelpCenterPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-4 gap-8">
             <div>
-              <h3 className="font-bold text-lg mb-4">NextIntern</h3>
+              <h3 className="font-bold text-lg mb-4">Internship And Project</h3>
               <p className="text-gray-400">
                 Your trusted platform for career opportunities and professional growth.
               </p>
@@ -616,7 +616,7 @@ export default async function HelpCenterPage() {
             </div>
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2025 NextIntern. All rights reserved.</p>
+            <p>&copy; 2025 Internship And Project. All rights reserved.</p>
           </div>
         </div>
       </footer>

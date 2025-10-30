@@ -64,7 +64,7 @@ export default function ForgotPasswordPage() {
       {/* Brand Logo */}
       <div className="absolute top-8 left-8">
         <Link href="/" className="text-2xl font-bold font-manrope text-primary-600">
-          NextIntern
+          Internship And Project
         </Link>
       </div>
 

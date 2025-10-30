@@ -1,6 +1,6 @@
 /**
  * NextAuth.js Configuration
- * NextIntern v2 - Final Corrected Version
+ * Internship And Project v2 - Final Corrected Version
  */
 
 import NextAuth, { type NextAuthConfig } from 'next-auth'

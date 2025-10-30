@@ -1,5 +1,5 @@
 // src/app/candidate/page.tsx
-// Candidate Dashboard - NextIntern 2.0 - Fixed Design & Performance
+// Candidate Dashboard - Internship And Project 2.0 - Fixed Design & Performance
 
 'use client';
 

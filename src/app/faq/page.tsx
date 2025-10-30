@@ -15,12 +15,12 @@ const pool = new Pool({
 });
 
 export const metadata: Metadata = {
-  title: 'Frequently Asked Questions | NextIntern',
-  description: 'Find answers to common questions about NextIntern. Get help with applications, profiles, industry verification, and more.',
-  keywords: ['FAQ', 'help', 'support', 'questions', 'NextIntern guide', 'privacy', 'opportunities']
+  title: 'Frequently Asked Questions | Internship And Project',
+  description: 'Find answers to common questions about Internship And Project. Get help with applications, profiles, industry verification, and more.',
+  keywords: ['FAQ', 'help', 'support', 'questions', 'Internship And Project guide', 'privacy', 'opportunities']
 };
 
-// FIXED: Updated FAQ Interface for NextIntern 2.0
+// FIXED: Updated FAQ Interface for Internship And Project 2.0
 interface FAQ {
   id: string;
   question: string;
@@ -100,7 +100,7 @@ async function getFAQData() {
   }
 }
 
-// FIXED: Updated FAQs for NextIntern 2.0 with privacy focus and 4 user types
+// FIXED: Updated FAQs for Internship And Project 2.0 with privacy focus and 4 user types
 function getFAQs(): FAQ[] {
   return [
     // Getting Started
@@ -114,16 +114,16 @@ function getFAQs(): FAQ[] {
     },
     {
       id: '2',
-      question: 'What are the different user types on NextIntern?',
-      answer: 'NextIntern supports four user types: Candidates (students/freelancers), Industries (companies), Institutes (colleges/universities), and Admins. Each has different features and access levels designed for their specific needs.',
+      question: 'What are the different user types on Internship And Project?',
+      answer: 'Internship And Project supports four user types: Candidates (students/freelancers), Industries (companies), Institutes (colleges/universities), and Admins. Each has different features and access levels designed for their specific needs.',
       category: 'Getting Started',
       helpful_count: 54,
       order: 2
     },
     {
       id: '3',
-      question: 'How does privacy protection work on NextIntern?',
-      answer: 'NextIntern prioritizes your privacy. Companies cannot see your personal contact information unless you have a premium account or explicitly share it. Your profile uses anonymous display options to protect your identity during the initial screening process.',
+      question: 'How does privacy protection work on Internship And Project?',
+      answer: 'Internship And Project prioritizes your privacy. Companies cannot see your personal contact information unless you have a premium account or explicitly share it. Your profile uses anonymous display options to protect your identity during the initial screening process.',
       category: 'Privacy & Security',
       helpful_count: 89,
       order: 3
@@ -141,7 +141,7 @@ function getFAQs(): FAQ[] {
     {
       id: '5',
       question: 'What types of opportunities are available?',
-      answer: 'NextIntern offers three types: Internships (for academic credit), Projects (short-term work), and Freelancing (premium feature). You can filter by type, location, work arrangement (remote/onsite/hybrid), and industry.',
+      answer: 'Internship And Project offers three types: Internships (for academic credit), Projects (short-term work), and Freelancing (premium feature). You can filter by type, location, work arrangement (remote/onsite/hybrid), and industry.',
       category: 'Opportunities',
       helpful_count: 85,
       order: 5
@@ -191,7 +191,7 @@ function getFAQs(): FAQ[] {
     {
       id: '11',
       question: 'Why can\'t I see candidate contact information?',
-      answer: 'NextIntern protects candidate privacy. Free industry accounts see skills and qualifications but not names or contact details. Premium industry accounts can view full candidate profiles and contact information.',
+      answer: 'Internship And Project protects candidate privacy. Free industry accounts see skills and qualifications but not names or contact details. Premium industry accounts can view full candidate profiles and contact information.',
       category: 'Privacy & Security',
       helpful_count: 82,
       order: 11
@@ -208,7 +208,7 @@ function getFAQs(): FAQ[] {
     // Institute Help
     {
       id: '13',
-      question: 'How do institutes integrate with NextIntern?',
+      question: 'How do institutes integrate with Internship And Project?',
       answer: 'Institutes can register to manage their students\' internship requirements, track placements, verify student email domains, and access analytics. This helps colleges ensure students complete mandatory internship requirements.',
       category: 'Institute Integration',
       helpful_count: 45,
@@ -245,14 +245,14 @@ function getFAQs(): FAQ[] {
     {
       id: '17',
       question: 'How do I report inappropriate behavior?',
-      answer: 'Use the "Report" button on profiles or messages, or contact support directly at support@nextintern.com. We investigate all reports promptly and take appropriate action to maintain a safe, professional environment.',
+      answer: 'Use the "Report" button on profiles or messages, or contact support directly at support@Internship And Project.com. We investigate all reports promptly and take appropriate action to maintain a safe, professional environment.',
       category: 'Safety & Support',
       helpful_count: 74,
       order: 17
     },
     {
       id: '18',
-      question: 'What data does NextIntern collect and why?',
+      question: 'What data does Internship And Project collect and why?',
       answer: 'We collect only essential data for matching candidates with opportunities: professional background, skills, preferences, and application activity. All data is secured, never sold, and you control what\'s visible. Read our Privacy Policy for full details.',
       category: 'Privacy & Security',
       helpful_count: 92,
@@ -320,7 +320,7 @@ export default async function FAQPage() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <Link href="/" className="text-2xl font-bold font-manrope text-primary-600">
-                NextIntern
+                Internship And Project
               </Link>
             </div>
             <div className="hidden md:flex items-center space-x-8">
@@ -361,7 +361,7 @@ export default async function FAQPage() {
               Frequently Asked Questions
             </h1>
             <p className="text-lg text-gray-600 mb-8">
-              Find quick answers to common questions about NextIntern&#39;s privacy-focused platform
+              Find quick answers to common questions about Internship And Project&#39;s privacy-focused platform
             </p>
             
             {/* Search Box */}
@@ -634,7 +634,7 @@ export default async function FAQPage() {
           <div className="grid md:grid-cols-4 gap-8">
             <div>
               <h3 className="text-2xl font-bold font-manrope text-white mb-4">
-                NextIntern
+                Internship And Project
               </h3>
               <p className="text-gray-400 leading-relaxed">
                 Privacy-focused platform connecting candidates with opportunities.
@@ -695,7 +695,7 @@ export default async function FAQPage() {
           
           <div className="border-t border-gray-800 mt-8 pt-8 text-center">
             <p className="text-gray-400">
-              © 2025 NextIntern. All rights reserved.
+              © 2025 Internship And Project. All rights reserved.
             </p>
           </div>
         </div>
