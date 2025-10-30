@@ -344,7 +344,7 @@ const TermsPage = ({ params }: TermsPageProps) => {
                 <section>
                   <h4 className="font-bold text-gray-900 mb-2">5. Platform Liability</h4>
                   <p>
-                    NextIntern is a PLATFORM ONLY. We do NOT guarantee employment, payment terms, or work conditions. 
+                    Internship And Project is a PLATFORM ONLY. We do NOT guarantee employment, payment terms, or work conditions. 
                     All agreements are between you and the employer. We are NOT responsible for:
                   </p>
                   <ul className="list-disc ml-5 space-y-1 mt-2">

@@ -105,7 +105,7 @@ export default async function HowItWorksPage() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <Link href="/" className="text-2xl font-bold font-manrope text-primary-600">
-                NextIntern
+                Internship And Project
               </Link>
             </div>
             <div className="hidden md:flex items-center space-x-8">
@@ -140,7 +140,7 @@ export default async function HowItWorksPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h1 className="text-4xl lg:text-5xl font-bold font-manrope text-gray-900 mb-6">
-              How NextIntern Works
+              How Internship And Project Works
             </h1>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
               A simple, streamlined process that connects students with companies efficiently. 
@@ -410,12 +410,12 @@ export default async function HowItWorksPage() {
         </section>
       )}
 
-      {/* Why Choose NextIntern */}
+      {/* Why Choose Internship And Project */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 font-manrope mb-6">
-              Why Choose NextIntern?
+              Why Choose Internship And Project?
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
               Features that make us the preferred platform for internship connections
@@ -482,7 +482,7 @@ export default async function HowItWorksPage() {
             Ready to Get Started?
           </h2>
           <p className="text-xl text-primary-100 mb-8 max-w-2xl mx-auto">
-            Join {stats.totalStudents}+ students and {stats.verifiedCompanies}+ companies who trust NextIntern 
+            Join {stats.totalStudents}+ students and {stats.verifiedCompanies}+ companies who trust Internship And Project 
             for their internship needs.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -508,7 +508,7 @@ export default async function HowItWorksPage() {
           <div className="grid md:grid-cols-4 gap-8">
             <div>
               <h3 className="text-2xl font-bold font-manrope text-white mb-4">
-                NextIntern
+                Internship And Project
               </h3>
               <p className="text-gray-400 leading-relaxed">
                 Connecting students with companies for meaningful internship experiences.
@@ -566,7 +566,7 @@ export default async function HowItWorksPage() {
           
           <div className="border-t border-gray-800 mt-8 pt-8 text-center">
             <p className="text-gray-400">
-              © 2025 NextIntern. All rights reserved.
+              © 2025 Internship And Project. All rights reserved.
             </p>
           </div>
         </div>

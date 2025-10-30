@@ -6,11 +6,11 @@ import { ThemeProvider } from '@/hooks/use-theme';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'NextIntern - Where Careers Begin',
+  title: 'Internship And Project - Where Careers Begin',
   description: 'A modern internship platform connecting candidates with companies and institutes. Find your perfect opportunity today.',
   keywords: ['internships', 'candidates', 'companies', 'institutes', 'careers', 'jobs', 'opportunities'],
   openGraph: {
-    title: 'NextIntern - Where Careers Begin',
+    title: 'Internship And Project - Where Careers Begin',
     description: 'Connect candidates with companies and educational institutes for internships, projects, and freelancing opportunities.',
     type: 'website',
   },
@@ -27,7 +27,7 @@ export default function RootLayout({
         <SessionProvider>
           <ThemeProvider
             defaultTheme="teal"
-            storageKey="nextintern-theme"
+            storageKey="Internship And Project-theme"
           >
             {children}
             

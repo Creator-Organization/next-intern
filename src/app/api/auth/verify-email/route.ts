@@ -162,7 +162,7 @@ export async function POST(request: NextRequest) {
     console.log(`Email verified for user: ${user.email} (${user.userType})`)
 
     return NextResponse.json({
-      message: 'Email verified successfully! Welcome to NextIntern.',
+      message: 'Email verified successfully! Welcome to Internship And Project.',
       success: true,
       user: {
         id: user.id,

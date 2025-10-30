@@ -1,6 +1,6 @@
 /**
  * Database Connection Utilities
- * NextIntern - Updated for 28-Table Schema
+ * Internship And Project - Updated for 28-Table Schema
  */
 import { PrismaClient } from '@prisma/client'
 

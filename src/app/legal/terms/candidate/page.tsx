@@ -1,5 +1,5 @@
 // src/app/legal/terms/candidate/page.tsx
-// Candidate Terms & Conditions Page - NextIntern 2.0
+// Candidate Terms & Conditions Page - Internship And Project 2.0
 
 'use client';
 
@@ -66,7 +66,7 @@ export default function CandidateTermsPage() {
       <header className="sticky top-0 z-50 bg-white/80 shadow-sm backdrop-blur-lg">
         <div className="container mx-auto flex items-center justify-between px-6 py-4">
           <Link href="/" className="text-2xl font-bold text-gray-800">
-            NextIntern <span className="text-blue-600">2.0</span>
+            Internship And Project <span className="text-blue-600">2.0</span>
           </Link>
           <Link
             href="/candidate"
@@ -89,7 +89,7 @@ export default function CandidateTermsPage() {
               Candidate Terms & Conditions
             </CardTitle>
             <p className="mt-2 text-gray-600">
-              Please review and accept our terms to continue using NextIntern
+              Please review and accept our terms to continue using Internship And Project
               2.0 as a candidate.
             </p>
           </CardHeader>
@@ -151,7 +151,7 @@ export default function CandidateTermsPage() {
                 1. Candidate Responsibilities
               </h3>
               <p className="mb-4 text-gray-700">
-                As a candidate on NextIntern 2.0, you agree to:
+                As a candidate on Internship And Project 2.0, you agree to:
               </p>
               <ul className="mb-6 list-disc space-y-2 pl-6 text-gray-700">
                 <li>Provide accurate and up-to-date profile information</li>
@@ -167,7 +167,7 @@ export default function CandidateTermsPage() {
                 2. Privacy Protection System
               </h3>
               <p className="mb-4 text-gray-700">
-                NextIntern 2.0 protects your privacy through our advanced
+                Internship And Project 2.0 protects your privacy through our advanced
                 anonymization system:
               </p>
               <ul className="mb-6 list-disc space-y-2 pl-6 text-gray-700">
@@ -188,7 +188,7 @@ export default function CandidateTermsPage() {
                 3. Opportunity Types & Access
               </h3>
               <p className="mb-4 text-gray-700">
-                NextIntern 2.0 offers three types of opportunities:
+                Internship And Project 2.0 offers three types of opportunities:
               </p>
               <ul className="mb-6 list-disc space-y-2 pl-6 text-gray-700">
                 <li>

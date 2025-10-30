@@ -1,9 +1,9 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Terms of Service | NextIntern',
-  description: 'Terms and conditions for using the NextIntern platform. Read our user agreements, platform policies, and legal information.',
-  keywords: ['terms of service', 'user agreement', 'platform policies', 'NextIntern legal']
+  title: 'Terms of Service | Internship And Project',
+  description: 'Terms and conditions for using the Internship And Project platform. Read our user agreements, platform policies, and legal information.',
+  keywords: ['terms of service', 'user agreement', 'platform policies', 'Internship And Project legal']
 };
 
 const formatDate = (date: Date): string => {
@@ -26,7 +26,7 @@ export default function TermsOfServicePage() {
             Terms of Service
           </h1>
           <p className="text-lg text-gray-600">
-            These terms govern your use of NextIntern and related services.
+            These terms govern your use of Internship And Project and related services.
             Please read them carefully.
           </p>
           <p className="text-sm text-gray-500 mt-4">
@@ -46,7 +46,7 @@ export default function TermsOfServicePage() {
             </h2>
             <div className="prose prose-gray max-w-none">
               <p className="text-gray-700 mb-4">
-                By accessing or using NextIntern (&ldquo;the Platform&rdquo;), you agree to be bound by these Terms of Service (&ldquo;Terms&rdquo;). If you do not agree to these Terms, you may not use our services.
+                By accessing or using Internship And Project (&ldquo;the Platform&rdquo;), you agree to be bound by these Terms of Service (&ldquo;Terms&rdquo;). If you do not agree to these Terms, you may not use our services.
               </p>
               <p className="text-gray-700 mb-4">
                 These Terms apply to all users of the Platform, including students, companies, and administrators. By creating an account, you acknowledge that you have read, understood, and agree to be bound by these Terms.
@@ -168,12 +168,12 @@ export default function TermsOfServicePage() {
             <div className="prose prose-gray max-w-none">
               <h3 className="text-lg font-medium text-gray-900 mb-3">Platform Content</h3>
               <p className="text-gray-700 mb-4">
-                NextIntern owns all rights to the Platform, including its design, code, trademarks, and proprietary content. Users may not copy, modify, or distribute our intellectual property without permission.
+                Internship And Project owns all rights to the Platform, including its design, code, trademarks, and proprietary content. Users may not copy, modify, or distribute our intellectual property without permission.
               </p>
               
               <h3 className="text-lg font-medium text-gray-900 mb-3">User Content</h3>
               <p className="text-gray-700 mb-4">
-                You retain ownership of content you upload but grant NextIntern a license to use, display, and distribute such content as necessary to provide our services.
+                You retain ownership of content you upload but grant Internship And Project a license to use, display, and distribute such content as necessary to provide our services.
               </p>
               
               <h3 className="text-lg font-medium text-gray-900 mb-3">Copyright Protection</h3>
@@ -242,12 +242,12 @@ export default function TermsOfServicePage() {
               
               <h3 className="text-lg font-medium text-gray-900 mb-3">User Interactions</h3>
               <p className="text-gray-700 mb-4">
-                NextIntern is not responsible for interactions between students and companies. Users engage with each other at their own risk and should exercise appropriate caution.
+                Internship And Project is not responsible for interactions between students and companies. Users engage with each other at their own risk and should exercise appropriate caution.
               </p>
               
               <h3 className="text-lg font-medium text-gray-900 mb-3">Limitation of Liability</h3>
               <p className="text-gray-700">
-                To the maximum extent permitted by law, NextIntern&apos;s liability is limited to the amount you paid for our services in the 12 months preceding the claim.
+                To the maximum extent permitted by law, Internship And Project&apos;s liability is limited to the amount you paid for our services in the 12 months preceding the claim.
               </p>
             </div>
           </section>
@@ -288,17 +288,17 @@ export default function TermsOfServicePage() {
               
               <h3 className="text-lg font-medium text-gray-900 mb-3">Entire Agreement</h3>
               <p className="text-gray-700 mb-4">
-                These Terms, together with our Privacy Policy, constitute the entire agreement between you and NextIntern regarding use of the Platform.
+                These Terms, together with our Privacy Policy, constitute the entire agreement between you and Internship And Project regarding use of the Platform.
               </p>
               
               <h3 className="text-lg font-medium text-gray-900 mb-3">Assignment</h3>
               <p className="text-gray-700 mb-4">
-                NextIntern may assign these Terms without notice. Users may not assign their rights or obligations under these Terms without our written consent.
+                Internship And Project may assign these Terms without notice. Users may not assign their rights or obligations under these Terms without our written consent.
               </p>
               
               <h3 className="text-lg font-medium text-gray-900 mb-3">Contact Information</h3>
               <p className="text-gray-700">
-                For questions about these Terms, please contact us at legal@nextintern.com or through our support system.
+                For questions about these Terms, please contact us at legal@Internship And Project.com or through our support system.
               </p>
             </div>
           </section>

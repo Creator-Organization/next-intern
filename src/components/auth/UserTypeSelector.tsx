@@ -1,5 +1,5 @@
 // src/components/auth/UserTypeSelector.tsx
-// User Type Selector Component - NextIntern v2
+// User Type Selector Component - Internship And Project v2
 
 'use client'
 

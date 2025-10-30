@@ -1,6 +1,6 @@
 /**
  * NextAuth.js API Route Handler
- * NextIntern - Internship Platform
+ * Internship And Project - Internship Platform
  */
 
 import { handlers } from '@/lib/auth'

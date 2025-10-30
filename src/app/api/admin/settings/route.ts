@@ -5,9 +5,9 @@ import { db } from '@/lib/db'
 // ✅ FIX: Use const instead of let
 const settingsStore = {
   platform: {
-    siteName: 'NextIntern 2.0',
+    siteName: 'Internship And Project 2.0',
     platformTagline: 'Privacy-focused internship marketplace',
-    supportEmail: 'support@nextintern.com',
+    supportEmail: 'support@Internship And Project.com',
     emailNotifications: true,
     newUserRegistration: true,
     maintenanceMode: false

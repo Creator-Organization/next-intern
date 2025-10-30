@@ -1,5 +1,5 @@
 // src/app/opportunities/page.tsx
-// Public Browse Opportunities Page - NextIntern 2.0
+// Public Browse Opportunities Page - Internship And Project 2.0
 
 'use client'
 
@@ -99,7 +99,7 @@ function OpportunitiesContent() {
         <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
             <Link href="/" className="text-2xl font-bold text-primary-600 font-manrope">
-              NextIntern
+              Internship And Project
             </Link>
             <div className="flex items-center gap-4">
               {session ? (

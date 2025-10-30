@@ -1,4 +1,4 @@
-# NextIntern
+# Internship And Project
 
 A modern, full-stack internship platform connecting students with companies. Built with Next.js, TypeScript, and cutting‑edge web technologies.
 
@@ -85,8 +85,8 @@ A modern, full-stack internship platform connecting students with companies. Bui
 ### Installation
 1. Clone the repository  
    ```bash
-   git clone https://github.com/YOUR_USERNAME/nextintern.git
-   cd nextintern
+   git clone https://github.com/YOUR_USERNAME/Internship And Project.git
+   cd Internship And Project
    ```
 2. Install dependencies  
    ```bash
@@ -129,7 +129,7 @@ docs/                  # Documentation
 - `/` — Landing page with platform overview
 - `/internships` — Browse all internships (public view)
 - `/companies` — Featured companies directory
-- `/about` — About NextIntern platform
+- `/about` — About Internship And Project platform
 
 ### Authentication
 - `/auth/student` — Student login & registration
@@ -198,10 +198,10 @@ This project is licensed under the MIT License — see the `LICENSE` file for de
 - All Contributors — For making this project possible
 
 ## 📞 Contact & Support
-- Website: nextintern.com
-- Email: hello@nextintern.com
-- GitHub Issues: Report bugs or request features — https://github.com/YOUR_USERNAME/nextintern/issues
-- Discussions: Community discussions — https://github.com/YOUR_USERNAME/nextintern/discussions
+- Website: Internship And Project.com
+- Email: hello@Internship And Project.com
+- GitHub Issues: Report bugs or request features — https://github.com/YOUR_USERNAME/Internship And Project/issues
+- Discussions: Community discussions — https://github.com/YOUR_USERNAME/Internship And Project/discussions
 
 Built with ❤️ for students and companies worldwide.  
-NextIntern — Where careers begin ✨
+Internship And Project — Where careers begin ✨

@@ -1,5 +1,5 @@
 // src/app/api/opportunities/[id]/apply/route.ts
-// Application Submission API - NextIntern 2.0
+// Application Submission API - Internship And Project 2.0
 
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';

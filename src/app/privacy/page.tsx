@@ -26,7 +26,7 @@ export default function PrivacyPolicyPage() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <Link href="/" className="text-2xl font-bold font-manrope text-primary-600">
-                NextIntern
+                Internship And Project
               </Link>
             </div>
             <div className="hidden md:flex items-center space-x-8">
@@ -71,7 +71,7 @@ export default function PrivacyPolicyPage() {
               Privacy Policy
             </h1>
             <p className="text-xl text-gray-600 leading-relaxed mb-4">
-              Your privacy is important to us. This policy explains how NextIntern collects, 
+              Your privacy is important to us. This policy explains how Internship And Project collects, 
               uses, and protects your personal information.
             </p>
             <p className="text-sm text-gray-500">
@@ -135,13 +135,13 @@ export default function PrivacyPolicyPage() {
                 1. Introduction
               </h2>
               <p className="text-gray-600 leading-relaxed mb-4">
-                NextIntern Technologies Pvt. Ltd. (&#34;NextIntern,&#34; &#34;we,&#34; &#34;our,&#34; or &#34;us&#34;) 
-                operates the NextIntern platform that connects students with internship opportunities. 
+                Internship And Project Technologies Pvt. Ltd. (&#34;Internship And Project,&#34; &#34;we,&#34; &#34;our,&#34; or &#34;us&#34;) 
+                operates the Internship And Project platform that connects students with internship opportunities. 
                 This Privacy Policy describes how we collect, use, disclose, and safeguard your information 
                 when you use our website, mobile application, and related services.
               </p>
               <p className="text-gray-600 leading-relaxed">
-                By accessing or using NextIntern, you agree to the collection and use of information 
+                By accessing or using Internship And Project, you agree to the collection and use of information 
                 in accordance with this Privacy Policy. If you do not agree with our policies and practices, 
                 do not use our services.
               </p>
@@ -346,7 +346,7 @@ export default function PrivacyPolicyPage() {
               </div>
 
               <p className="text-gray-600 leading-relaxed">
-                To exercise these rights, please contact us at privacy@nextintern.com or through 
+                To exercise these rights, please contact us at privacy@Internship And Project.com or through 
                 your account settings. We will respond to your request within 30 days.
               </p>
             </div>
@@ -436,12 +436,12 @@ export default function PrivacyPolicyPage() {
                   <div className="space-y-3">
                     <div className="flex items-center">
                       <Mail className="h-5 w-5 text-primary-600 mr-3" />
-                      <span className="text-gray-900">privacy@nextintern.com</span>
+                      <span className="text-gray-900">privacy@Internship And Project.com</span>
                     </div>
                     <div className="flex items-start">
                       <Building className="h-5 w-5 text-primary-600 mr-3 mt-1" />
                       <div className="text-gray-900">
-                        <div>NextIntern Technologies Pvt. Ltd.</div>
+                        <div>Internship And Project Technologies Pvt. Ltd.</div>
                         <div className="text-sm text-gray-600 mt-1">
                           IT Park, Phase 2, Block B, 4th Floor<br />
                           Hinjewadi, Pune, Maharashtra 411057<br />
@@ -490,7 +490,7 @@ export default function PrivacyPolicyPage() {
           <div className="grid md:grid-cols-4 gap-8">
             <div>
               <h3 className="text-2xl font-bold font-manrope text-white mb-4">
-                NextIntern
+                Internship And Project
               </h3>
               <p className="text-gray-400 leading-relaxed">
                 Connecting students with companies for meaningful internship experiences.
@@ -539,7 +539,7 @@ export default function PrivacyPolicyPage() {
           
           <div className="border-t border-gray-800 mt-8 pt-8 text-center">
             <p className="text-gray-400">
-              © 2025 NextIntern. All rights reserved.
+              © 2025 Internship And Project. All rights reserved.
             </p>
           </div>
         </div>

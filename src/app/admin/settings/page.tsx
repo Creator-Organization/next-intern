@@ -57,9 +57,9 @@ export default function AdminSettings() {
   const [isSaving, setIsSaving] = useState(false);
   const [settings, setSettings] = useState<Settings>({
     platform: {
-      siteName: 'NextIntern 2.0',
+      siteName: 'Internship And Project 2.0',
       platformTagline: 'Privacy-focused internship marketplace',
-      supportEmail: 'support@nextintern.com',
+      supportEmail: 'support@Internship And Project.com',
       emailNotifications: true,
       newUserRegistration: true,
       maintenanceMode: false,

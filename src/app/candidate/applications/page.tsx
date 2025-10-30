@@ -1,5 +1,5 @@
 // src/app/candidate/applications/page.tsx
-// Applications Page - NextIntern v2 - Fully Optimized ✅
+// Applications Page - Internship And Project v2 - Fully Optimized ✅
 
 "use client";
 

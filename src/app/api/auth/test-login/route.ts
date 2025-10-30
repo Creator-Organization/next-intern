@@ -1,6 +1,6 @@
 /**
  * Test Login API Route for Debugging
- * NextIntern - Authentication System
+ * Internship And Project - Authentication System
  */
 
 import { NextRequest, NextResponse } from 'next/server'

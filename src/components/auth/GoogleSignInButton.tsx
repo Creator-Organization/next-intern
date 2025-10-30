@@ -1,6 +1,6 @@
 /**
  * Google Sign-In Button Component
- * NextIntern - Authentication System
+ * Internship And Project - Authentication System
  */
 
 'use client'

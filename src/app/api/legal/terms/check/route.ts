@@ -1,5 +1,5 @@
 // src/app/api/legal/terms/check/route.ts
-// Terms & Conditions Check API - NextIntern 2.0
+// Terms & Conditions Check API - Internship And Project 2.0
 
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';

@@ -8,14 +8,14 @@ const resend = new Resend(process.env.RESEND_API_KEY)
 
 // Email configuration
 const EMAIL_CONFIG = {
-    from: 'NextIntern <onboarding@resend.dev>',
+    from: 'Internship And Project <onboarding@resend.dev>',
     baseUrl: process.env.NEXTAUTH_URL || 'http://localhost:3000'
 } as const
 
 // Email templates - Updated for new user types
 const EMAIL_TEMPLATES = {
     passwordReset: {
-        subject: 'Reset Your NextIntern Password',
+        subject: 'Reset Your Internship And Project Password',
         getHtml: (resetUrl: string, userName: string) => `
       <!DOCTYPE html>
       <html>
@@ -26,7 +26,7 @@ const EMAIL_TEMPLATES = {
       </head>
       <body style="font-family: Inter, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
         <div style="text-align: center; margin-bottom: 30px;">
-          <h1 style="color: #0891b2; margin: 0; font-size: 28px; font-weight: 700;">NextIntern</h1>
+          <h1 style="color: #0891b2; margin: 0; font-size: 28px; font-weight: 700;">Internship And Project</h1>
           <p style="color: #64748b; margin: 5px 0 0 0;">Your Gateway to Amazing Opportunities</p>
         </div>
         
@@ -38,7 +38,7 @@ const EMAIL_TEMPLATES = {
           </p>
           
           <p style="margin: 0 0 20px 0; color: #475569;">
-            We received a request to reset your password for your NextIntern account. If you didn't request this, you can safely ignore this email.
+            We received a request to reset your password for your Internship And Project account. If you didn't request this, you can safely ignore this email.
           </p>
           
           <div style="text-align: center; margin: 30px 0;">
@@ -60,7 +60,7 @@ const EMAIL_TEMPLATES = {
         
         <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; text-align: center;">
           <p style="color: #64748b; font-size: 14px; margin: 0;">
-            This email was sent by NextIntern. If you have any questions, contact us at support@nextintern.com
+            This email was sent by Internship And Project. If you have any questions, contact us at support@Internship And Project.com
           </p>
         </div>
       </body>
@@ -69,7 +69,7 @@ const EMAIL_TEMPLATES = {
     },
 
     emailVerification: {
-        subject: 'Verify Your NextIntern Email Address',
+        subject: 'Verify Your Internship And Project Email Address',
         getHtml: (verifyUrl: string, userName: string) => `
       <!DOCTYPE html>
       <html>
@@ -80,19 +80,19 @@ const EMAIL_TEMPLATES = {
       </head>
       <body style="font-family: Inter, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
         <div style="text-align: center; margin-bottom: 30px;">
-          <h1 style="color: #0891b2; margin: 0; font-size: 28px; font-weight: 700;">NextIntern</h1>
+          <h1 style="color: #0891b2; margin: 0; font-size: 28px; font-weight: 700;">Internship And Project</h1>
           <p style="color: #64748b; margin: 5px 0 0 0;">Your Gateway to Amazing Opportunities</p>
         </div>
         
         <div style="background: #f0f9ff; padding: 30px; border-radius: 12px; border-left: 4px solid #0891b2;">
-          <h2 style="color: #334155; margin: 0 0 20px 0; font-size: 24px;">Welcome to NextIntern!</h2>
+          <h2 style="color: #334155; margin: 0 0 20px 0; font-size: 24px;">Welcome to Internship And Project!</h2>
           
           <p style="margin: 0 0 20px 0; color: #475569;">
             Hello ${userName},
           </p>
           
           <p style="margin: 0 0 20px 0; color: #475569;">
-            Thank you for joining NextIntern! To complete your registration and start exploring amazing opportunities, please verify your email address.
+            Thank you for joining Internship And Project! To complete your registration and start exploring amazing opportunities, please verify your email address.
           </p>
           
           <div style="text-align: center; margin: 30px 0;">
@@ -124,7 +124,7 @@ const EMAIL_TEMPLATES = {
         
         <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; text-align: center;">
           <p style="color: #64748b; font-size: 14px; margin: 0;">
-            This email was sent by NextIntern. If you have any questions, contact us at support@nextintern.com
+            This email was sent by Internship And Project. If you have any questions, contact us at support@Internship And Project.com
           </p>
         </div>
       </body>
@@ -133,23 +133,23 @@ const EMAIL_TEMPLATES = {
     },
 
     welcomeEmail: {
-        subject: 'Welcome to NextIntern - Your Journey Starts Now!',
+        subject: 'Welcome to Internship And Project - Your Journey Starts Now!',
         getHtml: (userName: string, userType: 'candidate' | 'industry' | 'institute') => `
       <!DOCTYPE html>
       <html>
       <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Welcome to NextIntern</title>
+        <title>Welcome to Internship And Project</title>
       </head>
       <body style="font-family: Inter, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
         <div style="text-align: center; margin-bottom: 30px;">
-          <h1 style="color: #0891b2; margin: 0; font-size: 28px; font-weight: 700;">NextIntern</h1>
+          <h1 style="color: #0891b2; margin: 0; font-size: 28px; font-weight: 700;">Internship And Project</h1>
           <p style="color: #64748b; margin: 5px 0 0 0;">Your Gateway to Amazing Opportunities</p>
         </div>
         
         <div style="background: linear-gradient(135deg, #0891b2 0%, #06b6d4 100%); color: white; padding: 30px; border-radius: 12px; text-align: center; margin-bottom: 30px;">
-          <h2 style="margin: 0 0 15px 0; font-size: 26px;">Welcome to NextIntern!</h2>
+          <h2 style="margin: 0 0 15px 0; font-size: 26px;">Welcome to Internship And Project!</h2>
           <p style="margin: 0; font-size: 18px; opacity: 0.9;">
             Hello ${userName}, your email has been verified successfully!
           </p>
@@ -159,7 +159,7 @@ const EMAIL_TEMPLATES = {
         <div style="background: #f8fafc; padding: 25px; border-radius: 10px; margin-bottom: 20px;">
           <h3 style="color: #334155; margin: 0 0 15px 0;">Ready to Launch Your Career?</h3>
           <p style="color: #475569; margin: 0 0 15px 0;">
-            As a candidate on NextIntern, you now have access to thousands of opportunities from top companies.
+            As a candidate on Internship And Project, you now have access to thousands of opportunities from top companies.
           </p>
           <ul style="color: #475569; margin: 0; padding-left: 20px;">
             <li>Browse opportunities by location, skills, and stipend</li>
@@ -172,7 +172,7 @@ const EMAIL_TEMPLATES = {
         <div style="background: #f8fafc; padding: 25px; border-radius: 10px; margin-bottom: 20px;">
           <h3 style="color: #334155; margin: 0 0 15px 0;">Find Your Next Great Talent</h3>
           <p style="color: #475569; margin: 0 0 15px 0;">
-            As a company on NextIntern, you can now connect with talented candidates from top universities.
+            As a company on Internship And Project, you can now connect with talented candidates from top universities.
           </p>
           <ul style="color: #475569; margin: 0; padding-left: 20px;">
             <li>Post opportunities in minutes</li>
@@ -185,7 +185,7 @@ const EMAIL_TEMPLATES = {
         <div style="background: #f8fafc; padding: 25px; border-radius: 10px; margin-bottom: 20px;">
           <h3 style="color: #334155; margin: 0 0 15px 0;">Manage Your Student Community</h3>
           <p style="color: #475569; margin: 0 0 15px 0;">
-            As an educational institute on NextIntern, you can support your students' career development.
+            As an educational institute on Internship And Project, you can support your students' career development.
           </p>
           <ul style="color: #475569; margin: 0; padding-left: 20px;">
             <li>Track student placement progress</li>
@@ -207,7 +207,7 @@ const EMAIL_TEMPLATES = {
         
         <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; text-align: center;">
           <p style="color: #64748b; font-size: 14px; margin: 0;">
-            Need help getting started? Check out our <a href="${EMAIL_CONFIG.baseUrl}/help" style="color: #0891b2;">Help Center</a> or contact us at support@nextintern.com
+            Need help getting started? Check out our <a href="${EMAIL_CONFIG.baseUrl}/help" style="color: #0891b2;">Help Center</a> or contact us at support@Internship And Project.com
           </p>
         </div>
       </body>

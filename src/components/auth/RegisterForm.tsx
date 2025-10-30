@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // src/components/auth/RegisterForm.tsx
-// Register Form Component - NextIntern v2 - Fixed
+// Register Form Component - Internship And Project v2 - Fixed
 
 'use client';
 

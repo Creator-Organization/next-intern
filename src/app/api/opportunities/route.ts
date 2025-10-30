@@ -1,5 +1,5 @@
 // src/app/api/opportunities/route.ts
-// Opportunities API with Privacy Controls + Admin Approval System - NextIntern 2.0
+// Opportunities API with Privacy Controls + Admin Approval System - Internship And Project 2.0
 
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';

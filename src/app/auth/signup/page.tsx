@@ -71,7 +71,7 @@ function SignUpContent() {
       
       <div className="absolute top-8 left-8">
         <Link href="/" className="text-2xl font-bold font-manrope text-primary-600">
-          NextIntern
+          Internship And Project
         </Link>
       </div>
 
@@ -82,7 +82,7 @@ function SignUpContent() {
             Create Account
           </h1>
           <p className="text-gray-600">
-            {showTypeSelector ? 'Join NextIntern today' : `Join as ${getUserTypeDisplayName()}`}
+            {showTypeSelector ? 'Join Internship And Project today' : `Join as ${getUserTypeDisplayName()}`}
           </p>
         </div>
 

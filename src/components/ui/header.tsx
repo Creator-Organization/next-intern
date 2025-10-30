@@ -314,7 +314,7 @@ export function Header({ user }: HeaderProps) {
                 <span className="text-sm font-bold text-white">N</span>
               </div>
               <span className="font-manrope text-primary-600 hover:text-primary-700 text-2xl font-bold transition-colors">
-                NextIntern
+                Internship And Project
               </span>
             </Link>
           </div>
